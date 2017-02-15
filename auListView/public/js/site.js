@@ -1,0 +1,5 @@
+﻿
+$(function () {
+    $("#grid-basic").bootgrid();
+
+});

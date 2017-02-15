@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Cardview demo</title>
+    <link rel="stylesheet" type="text/css" href="/libs/bootstrap-3.3.7-dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="/libs/bootstrap-3.3.7-dist/css/bootstrap-theme.min.css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+
+    <link rel='stylesheet' href='/libs/jquery-bootgrid/jquery.bootgrid.css' />
+    <link rel='stylesheet' href='/css/styles.css' />
+</head>
+<body>
+    <table id="grid-basic" class="table table-condensed table-hover table-striped">
+        <thead>
+            <tr>
+                <th data-column-id="id" data-type="numeric">ID</th>
+                <th data-column-id="sender">Sender</th>
+                <th data-column-id="received" data-order="desc">Received</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>10238</td>
+                <td>eduardo@pingpong.com</td>
+                <td>14.10.2013</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script src="/libs/jquery-3.1.1.min.js"></script>
+    <script src="/libs/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+    <script src="/libs/lodash.min.js"></script>
+
+    <script src="/libs/jquery-bootgrid/jquery.bootgrid.js"></script>
+    <script src="/js/site.js"></script>
+</body>
+</html>
