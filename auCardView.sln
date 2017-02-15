@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "auListView", "auListView\auListView.njsproj", "{69119624-D5B7-400A-ADFC-7E61016C127D}"
+Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "auCardView", "auCardView\auCardView.njsproj", "{69119624-D5B7-400A-ADFC-7E61016C127D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
