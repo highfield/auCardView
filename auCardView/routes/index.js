@@ -1,5 +1,7 @@
 ﻿var express = require('express');
+var _ = require('lodash');
 var router = express.Router();
+
 
 var regioni = [{
     "id": "13",
@@ -986,6 +988,7 @@ var citta = [{
         "longitudine": 12.107669
     }];
 
+
 /* GET home page. */
 router.get('/', function (req, res) {
     res.render('index', { title: 'Express' });
@@ -1031,31 +1034,50 @@ router.get('/citta', function (req, res) {
         items: []
     };
     if (req.query) {
-        var reg = req.query.regione;
-        if (req.query.q) {
-            var q = req.query.q;
-            for (var i = 0; i < citta.length; i++) {
-                var c = citta[i];
-                if (c.id_regione == reg && c.nome.indexOf(q) >= 0) {
-                    result.items.push({
-                        id: c.id,
-                        text: c.nome
-                    });
-                }
+        var where = req.query.where || {};
+        var find = req.query.find;
+        var sort = req.query.sort;
+
+        var partial = [];
+        citta.forEach(function (c) {
+            if (where.id === c.id) {
+                partial.push(c);
             }
-        }
-        else if (req.query.id) {
-            var q = req.query.id;
-            for (var i = 0; i < citta.length; i++) {
-                var c = citta[i];
-                if (c.id == q) {
-                    result.items.push({
-                        id: c.id,
-                        text: c.nome
-                    });
-                }
+            else if (where.id_regione === c.id_regione) {
+                partial.push(c);
             }
-        }
+            else if (where.id == null && where.id_regione == null) {
+                partial.push(c);
+            }
+        });
+        //var reg = req.query.regione;
+        //if (req.query.q) {
+        //    var q = req.query.q;
+        //    for (var i = 0; i < citta.length; i++) {
+        //        var c = citta[i];
+        //        if (c.id_regione == reg && c.nome.indexOf(q) >= 0) {
+        //            result.items.push({
+        //                id: c.id,
+        //                text: c.nome
+        //            });
+        //        }
+        //    }
+        //}
+        //else if (req.query.id) {
+        //    var q = req.query.id;
+        //    for (var i = 0; i < citta.length; i++) {
+        //        var c = citta[i];
+        //        if (c.id == q) {
+        //            result.items.push({
+        //                id: c.id,
+        //                text: c.nome
+        //            });
+        //        }
+        //    }
+        //}
+        //else {
+        //    Array.prototype.push.apply(result.items, citta);
+        //}
     }
     res.json(result);
 });
