@@ -1066,9 +1066,11 @@ router.get('/citta', function (req, res) {
         partial = sort ? _.orderBy(partial, [sort.field], [sort.dir]) : partial;
 
         result.count = partial.length;
-        if (page && page.size > 1) {
-            var ix = page.index * page.size;
-            for (var i = ix, n = 0; i < partial.length && n < page.size; i++ , n++) {
+        if (page && +page.size > 1) {
+            var maxPages = Math.max(1, Math.ceil(partial.length / page.size));
+            var index = Math.max(0, Math.min(+page.index, maxPages - 1));
+            result.page = { index: index, count: maxPages };
+            for (var i = index * page.size, n = 0; i < partial.length && n < +page.size; i++ , n++) {
                 result.items.push(partial[i]);
             }
         }

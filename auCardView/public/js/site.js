@@ -39,7 +39,7 @@ if (typeof Object.create !== 'function') {
             var bclear = $('<button>').addClass('btn btn-default').attr('type', 'button').appendTo(gclear);
             $('<span>').addClass('glyphicon glyphicon-remove').appendTo(bclear);
 
-            $('<input>').addClass('form-control').attr({
+            var input = $('<input>').addClass('form-control').attr({
                 type: 'text',
                 placeholder: 'Search for...'
             }).appendTo(cell);
@@ -47,9 +47,26 @@ if (typeof Object.create !== 'function') {
             var gsearch = $('<span>').addClass('input-group-btn').appendTo(cell);
             var bsearch = $('<button>').addClass('btn btn-default').attr('type', 'button').appendTo(gsearch);
             $('<span>').addClass('glyphicon glyphicon-search').appendTo(bsearch);
+
+            bclear.on('click', function (e) {
+                e.preventDefault();
+                tfind = '';
+                input.val(tfind);
+                owner.refresh(true);
+            });
+
+            input.on('input', function () {
+                //
+            });
+
+            bsearch.on('click', function (e) {
+                e.preventDefault();
+                tfind = input.val().trim();
+                owner.refresh(true);
+            });
         }
 
-        var me = {}, vis = false;
+        var me = {}, vis = false, tfind;
 
         me.getVisible = function () { return vis; }
         me.setVisible = function (v) {
@@ -62,6 +79,13 @@ if (typeof Object.create !== 'function') {
                 else {
                     ctr.empty();
                 }
+                owner.refresh(true);
+            }
+        }
+
+        me._buildParams = function (params) {
+            if (vis && tfind && tfind.length) {
+                params.find = tfind;
             }
         }
 
@@ -101,7 +125,11 @@ if (typeof Object.create !== 'function') {
                 else {
                     ctr.empty();
                 }
+                owner.refresh();
             }
+        }
+
+        me._buildParams = function (params) {
         }
 
         return me;
@@ -109,27 +137,116 @@ if (typeof Object.create !== 'function') {
 
 
     function pageController(owner, ctr) {
-        function build() {
-            var bcell = $('<div>').addClass('col-lg-8').attr('aria-label', 'Page navigation').appendTo(ctr);
-            var ul = $('<ul>').addClass('pagination').appendTo(bcell);
+        function update() {
+            //navigation toolbar
+            bctr.empty();
 
-            var pcell = $('<div>').addClass('col-lg-4').appendTo(ctr);
+            var bprev, liprev = $('<li>').appendTo(bctr);
+            if (index === 0) {
+                bprev = $('<span>').appendTo(liprev.addClass('disabled'));
+            }
+            else {
+                bprev = $('<a>').attr({
+                    'href': '#',
+                    'aria-label': 'Previous'
+                }).appendTo(liprev);
+
+                bprev.on('click', function (e) {
+                    e.preventDefault();
+                    reqix = index - 1;
+                    owner.refresh();
+                });
+            }
+            $('<span>').attr('aria-hidden', true).html('&laquo;').appendTo(bprev);
+
+            for (var n = 0, i = Math.max(0, index - 2); n < 5 && i < count; i++ , n++) {
+                var li = $('<li>').appendTo(bctr);
+                if (i === index) {
+                    var s = $('<span>').text(i + 1).appendTo(li.addClass('active'));
+                    $('<span>').addClass('sr-only').text('(current)').appendTo(s);
+                }
+                else {
+                    var a = $('<a>').attr('href', '#').text(i + 1).appendTo(li);
+                    a.on('click', function (e) {
+                        e.preventDefault();
+                        reqix = $(this).text() - 1;
+                        owner.refresh();
+                    });
+                }
+            }
+
+            var bnext, linext = $('<li>').appendTo(bctr);
+            if (index >= count - 1) {
+                bnext = $('<span>').appendTo(linext.addClass('disabled'));
+            }
+            else {
+                bnext = $('<a>').attr({
+                    'href': '#',
+                    'aria-label': 'Next'
+                }).appendTo(linext);
+
+                bnext.on('click', function (e) {
+                    e.preventDefault();
+                    reqix = index + 1;
+                    owner.refresh();
+                });
+            }
+            $('<span>').attr('aria-hidden', true).html('&raquo;').appendTo(bnext);
+
+            //page x of N indication
+            pcell.empty();
+            if (reliable) {
+                $('<div>').text('Page ' + (index + 1) + ' of ' + count).appendTo(pcell);
+            }
         }
 
-        var me = {}, vis = false;
+        function build() {
+            var bcell = $('<div>').addClass('col-lg-8').attr('aria-label', 'Page navigation').appendTo(ctr);
+            bctr = $('<ul>').addClass('pagination').appendTo(bcell);
+
+            pcell = $('<div>').addClass('col-lg-4').appendTo(ctr);
+        }
+
+        var me = {}, vis = false, bctr, pcell;
+        var index, count, total, reliable = false, reqix = 0;
 
         me.getVisible = function () { return vis; }
         me.setVisible = function (v) {
             v = !!v;
             if (vis !== v) {
                 vis = v;
+                reliable = false;
+                index = 0;
+                count = 1;
                 if (vis) {
                     build();
+                    update();
                 }
                 else {
                     ctr.empty();
+                    bctr = pcell = null;
+                }
+                owner.refresh();
+            }
+        }
+
+        me._buildParams = function (params, clear) {
+            if (vis) {
+                if (clear || !reliable) reqix = 0;
+                params.page = {
+                    index: reqix,
+                    size: owner.options.pageSize
                 }
             }
+        }
+
+        me._update = function (info) {
+            if (!vis || !info || !info.page) return;
+            index = +info.page.index;
+            count = Math.max(+info.page.count, 1);
+            total = +info.count;
+            reliable = true;
+            update();
         }
 
         return me;
@@ -137,23 +254,94 @@ if (typeof Object.create !== 'function') {
 
 
     function AuCardView() {
-        //function buildSearchCell(col) {
-        //    var cell = $('<div>').addClass('input-group').appendTo(col);
-        //    var gclear = $('<span>').addClass('input-group-btn').appendTo(cell);
-        //    var bclear = $('<button>').addClass('btn btn-default').attr('type', 'button').appendTo(gclear);
-        //    $('<span>').addClass('glyphicon glyphicon-remove').appendTo(bclear);
+        function viewBuilder(items) {
+            var children = mrow.children();
+            try {
+                var i = 0;
+                for (; i < items.length; i++) {
+                    var ctr;
+                    if (i >= children.length) {
+                        ctr = $('<div>').appendTo(mrow);
+                    }
+                    else {
+                        ctr = $(children[i]);
+                        ctr.empty();
+                    }
+                    me.options.itemViewBuilder(ctr, items[i]);
+                }
+                while (i < children.length) {
+                    children[i++].remove();
+                }
+            }
+            catch (err) {
+                console.error(err);
+                //TODO
+            }
+        }
 
-        //    $('<input>').addClass('form-control').attr({
-        //        type: 'text',
-        //        placeholder: 'Search for...'
-        //    }).appendTo(cell);
+        function updater() {
+            //mrow.empty();
+            mrow.css('min-height', mrow.height());
 
-        //    var gsearch = $('<span>').addClass('input-group-btn').appendTo(cell);
-        //    var bsearch = $('<button>').addClass('btn btn-default').attr('type', 'button').appendTo(gsearch);
-        //    $('<span>').addClass('glyphicon glyphicon-remove').appendTo(bsearch);
-        //}
+            var params = {};
+            ctlSearch._buildParams(params);
+            ctlSort._buildParams(params);
+            ctlPage._buildParams(params, dirty);
+            dirty = false;
 
-        var me = {}, ctlSearch, ctlSort, ctlPage, mrow;
+            $.when(me.options.loader(params))
+                .then(function (data) {
+                    //alert(data.count);
+                    ctlPage._update(data);
+                    try {
+                        if (data && data.items && data.items.constructor === Array) {
+                            viewBuilder(data.items);
+                            mrow.css('min-height', 0);
+                            //try {
+                            //    data.items.forEach(function (item) {
+                            //        var vi = me.options.itemViewBuilder(item);
+                            //        mrow.append(vi);
+                            //    });
+                            //}
+                            //catch (err) {
+                            //    console.error(err);
+                            //    //TODO
+                            //}
+                        }
+                    }
+                    finally {
+                        deferrer.release();
+                    }
+                },
+                function (err) {
+                    console.error(err);
+                    //TODO
+                    deferrer.release();
+                });
+        }
+
+        var deferrer = (function () {
+            var me = {}, tmr;
+
+            me.trigger = function () {
+                if (tmr) {
+                    //
+                }
+                else {
+                    tmr = setTimeout(function () {
+                        updater();
+                    }, 200);
+                }
+            }
+
+            me.release = function () {
+                tmr = null;
+            }
+
+            return me;
+        })();
+
+        var me = {}, ctlSearch, ctlSort, ctlPage, mrow, dirty;
 
         me.getSearchController = function () { return ctlSearch; }
         me.getSortController = function () { return ctlSort; }
@@ -162,12 +350,12 @@ if (typeof Object.create !== 'function') {
         me.init = function (options, elem) {
             me.$elem = $(elem);
             me.options = $.extend({}, $.fn.auCardView.options, options);
-            me.overrideOptions();
+            //me.overrideOptions();
 
             me.$elem.addClass('auCardView');
-            var mainctr = $("<div>").addClass('container-fluid').appendTo(me.$elem);
+            var mainctr = $("<div>").addClass('container-fluid auCardView-container').appendTo(me.$elem);
 
-            var hrow = $('<div>').addClass('row').appendTo(mainctr);
+            var hrow = $('<div>').addClass('row auCardView-header').appendTo(mainctr);
             ctlSearch = searchController(me, $('<div>').addClass('col-lg-8').appendTo(hrow));
             ctlSearch.setVisible(me.options.showSearch);
 
@@ -176,56 +364,26 @@ if (typeof Object.create !== 'function') {
 
             mrow = $('<div>').addClass('row auCardView-body').appendTo(mainctr);
 
-            var frow = $('<div>').addClass('row').appendTo(mainctr);
+            var frow = $('<div>').addClass('row auCardView-footer').appendTo(mainctr);
             ctlPage = pageController(me, frow);
             ctlPage.setVisible(me.options.showPage);
         };
 
-        me.overrideOptions = function () {
-            $.each(me.options, function ($option) {
-                //if (typeof (self.$elem.data('jqtile-' + $option)) != "undefined") {
-                //    self.options[$option] = self.$elem.data('jqtile-' + $option);
-                //}
-            });
-        };
+        //me.overrideOptions = function () {
+        //    $.each(me.options, function ($option) {
+        //        //if (typeof (self.$elem.data('jqtile-' + $option)) != "undefined") {
+        //        //    self.options[$option] = self.$elem.data('jqtile-' + $option);
+        //        //}
+        //    });
+        //};
 
-        me.refresh = function () {
-            $.when(me.options.loader({}))
-                .then(function (data) {
-                    //alert(data.count);
-                    mrow.empty();
-                    data.items.forEach(function (item) {
-                        var vi = me.options.itemViewBuilder(item);
-                        mrow.append(vi);
-                    });
-                },
-                function (err) {
-                    alert(err);
-                });
+        me.refresh = function (d) {
+            if (d) dirty = true;
+            deferrer.trigger();
         }
 
         return me;
     }
-    //init: function (options, elem) {
-    //    var self = this;
-    //    //self.elem = elem;
-    //    self.$elem = $(elem);
-    //    self.options = $.extend({}, $.fn.auCardView.options, options);
-    //    self.overrideOptions();
-
-    //    var $ctr = $("<div>").appendTo(self.$elem);
-    //},
-
-    //overrideOptions: function () {
-    //    var self = this;
-    //    $.each(self.options, function ($option) {
-    //        //if (typeof (self.$elem.data('jqtile-' + $option)) != "undefined") {
-    //        //    self.options[$option] = self.$elem.data('jqtile-' + $option);
-    //        //}
-    //    });
-    //},
-    //};
-
 
 })(jQuery);
 
@@ -245,10 +403,11 @@ $(function () {
         return d.promise();
     }
 
-    function itemViewBuilder(item) {
-        var panel = $('<panel>').addClass('panel panel-default');
+    function itemViewBuilder(ctr, item) {
+        var panel = $('<panel>').addClass('panel panel-default auCardView-card').appendTo(ctr);
         var hdr = $('<div>').addClass('panel-heading').appendTo(panel);
         var title = $('<h4>').addClass('panel-title').appendTo(hdr);
+        $('<input>').attr({ type: 'checkbox' }).css({ 'margin-right': 20 }).appendTo(title);
         var a = $('<a>').attr({
             'data-toggle': 'collapse',
             href: '#collapse_' + item.id,
@@ -256,15 +415,17 @@ $(function () {
             'aria-controls': 'collapse_' + item.id
         }).appendTo(title);
         $('<i>').addClass('fa fa-bath').attr('aria-hidden', true).appendTo(a);
-        a.text('Card title');
+        $('<span>').text(item.nome + ' (' + item.sigla_automobilistica + ')').appendTo(a);
 
         var exp = $('<div>').addClass('collapse').attr('id', 'collapse_' + item.id).appendTo(panel);
-        var body = $('<div>').addClass('panel-body').appendTo(exp);
-        $('<h6>').addClass('card-subtitle mb-2 text-muted').text('Card subtitle').appendTo(body);
-        $('<p>').addClass('card-text').text("Some quick example text to build on the card title and make up the bulk of the card's content.").appendTo(body);
-        $('<a>').addClass('card-link').attr('href', '#').text('Card link').appendTo(body);
-        $('<a>').addClass('card-link').attr('href', '#').text('Another link').appendTo(body);
-        return panel;
+        var body = $('<div>').addClass('panel-body panel-default auCardView-card-body').appendTo(exp);
+        $('<h6>').addClass('card-subtitle mb-2 text-muted').text(item.regione).appendTo(body);
+        $('<p>').addClass('card-text').text("Coordinate: long=" + item.longitudine + "; lat=" + item.latitudine).appendTo(body);
+        $('<a>').addClass('card-link').attr({
+            'href': 'http://maps.google.com/maps?q=' + item.latitudine + ',' + item.longitudine,
+            'target': '_blank'
+        }).text('Apri mappa...').appendTo(body);
+        //return panel;
     }
 
 

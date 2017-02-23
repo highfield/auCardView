@@ -44,5 +44,28 @@ a, a:link, a:active, a:visited, a:hover {
 .auCardView {
 }
 
+.auCardView-container {
+}
+
+.auCardView-header {
+    /*margin-left: 0px !important;*/
+    /*margin-right: 0px !important;*/
+}
+
 .auCardView-body {
+}
+
+.auCardView-footer {
+    margin-left: 0px !important;
+    margin-right: 0px !important;
+}
+
+.auCardView-card {
+    /*border-color: transparent;*/
+    border: none !important;
+}
+
+.auCardView-card-body {
+    border-width: 1px;
+    border-style: solid;
 }
