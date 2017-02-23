@@ -153,7 +153,7 @@ if (typeof Object.create !== 'function') {
         //    $('<span>').addClass('glyphicon glyphicon-remove').appendTo(bsearch);
         //}
 
-        var me = {}, ctlSearch, ctlSort, ctlPage;
+        var me = {}, ctlSearch, ctlSort, ctlPage, mrow;
 
         me.getSearchController = function () { return ctlSearch; }
         me.getSortController = function () { return ctlSort; }
@@ -174,10 +174,10 @@ if (typeof Object.create !== 'function') {
             ctlSort = sortController(me, $('<div>').addClass('col-lg-4').appendTo(hrow));
             ctlSort.setVisible(me.options.showSort);
 
-            var mrow = $('<div>').addClass('row auCardView-body').appendTo(mainctr);
+            mrow = $('<div>').addClass('row auCardView-body').appendTo(mainctr);
 
             var frow = $('<div>').addClass('row').appendTo(mainctr);
-            ctlPage = pageController(me, froe);
+            ctlPage = pageController(me, frow);
             ctlPage.setVisible(me.options.showPage);
         };
 
@@ -188,6 +188,21 @@ if (typeof Object.create !== 'function') {
                 //}
             });
         };
+
+        me.refresh = function () {
+            $.when(me.options.loader({}))
+                .then(function (data) {
+                    //alert(data.count);
+                    mrow.empty();
+                    data.items.forEach(function (item) {
+                        var vi = me.options.itemViewBuilder(item);
+                        mrow.append(vi);
+                    });
+                },
+                function (err) {
+                    alert(err);
+                });
+        }
 
         return me;
     }
@@ -218,10 +233,38 @@ if (typeof Object.create !== 'function') {
 $(function () {
 
     function loader(params) {
+        var d = $.Deferred();
 
+        $.getJSON("citta", params)
+            .done(function (data) {
+                d.resolve(data);
+            }).fail(function (err) {
+                d.reject(err);
+            });
+
+        return d.promise();
     }
 
-    function itemViewBuilder() {
+    function itemViewBuilder(item) {
+        var panel = $('<panel>').addClass('panel panel-default');
+        var hdr = $('<div>').addClass('panel-heading').appendTo(panel);
+        var title = $('<h4>').addClass('panel-title').appendTo(hdr);
+        var a = $('<a>').attr({
+            'data-toggle': 'collapse',
+            href: '#collapse_' + item.id,
+            'aria-expanded': false,
+            'aria-controls': 'collapse_' + item.id
+        }).appendTo(title);
+        $('<i>').addClass('fa fa-bath').attr('aria-hidden', true).appendTo(a);
+        a.text('Card title');
+
+        var exp = $('<div>').addClass('collapse').attr('id', 'collapse_' + item.id).appendTo(panel);
+        var body = $('<div>').addClass('panel-body').appendTo(exp);
+        $('<h6>').addClass('card-subtitle mb-2 text-muted').text('Card subtitle').appendTo(body);
+        $('<p>').addClass('card-text').text("Some quick example text to build on the card title and make up the bulk of the card's content.").appendTo(body);
+        $('<a>').addClass('card-link').attr('href', '#').text('Card link').appendTo(body);
+        $('<a>').addClass('card-link').attr('href', '#').text('Another link').appendTo(body);
+        return panel;
     }
 
 
@@ -232,6 +275,9 @@ $(function () {
         itemViewBuilder: itemViewBuilder
     };
     $('#cv1').auCardView(options1);
+    var cv1 = $('#cv1').data('auCardView');
+
+    cv1.refresh();
     //var api = t.data('auCardView');
 
     //$.getJSON("citta", function (data) {

@@ -1035,21 +1035,47 @@ router.get('/citta', function (req, res) {
     };
     if (req.query) {
         var where = req.query.where || {};
-        var find = req.query.find;
+        var find = (req.query.find || '').toLowerCase();
         var sort = req.query.sort;
+        var page = req.query.page;
 
         var partial = [];
         citta.forEach(function (c) {
-            if (where.id === c.id) {
-                partial.push(c);
-            }
-            else if (where.id_regione === c.id_regione) {
-                partial.push(c);
-            }
-            else if (where.id == null && where.id_regione == null) {
-                partial.push(c);
+            if (where.id === c.id || where.id_regione === c.id_regione || where.id == null && where.id_regione == null) {
+                var cc = _.clone(c);
+                for (var i = 0; i < regioni.length; i++) {
+                    if (cc.id_regione == regioni[i].id) {
+                        cc.regione = regioni[i].nome;
+                        break;
+                    }
+                }
+                partial.push(cc);
             }
         });
+
+        if (find.length) {
+            var a = [];
+            partial.forEach(function (c) {
+                if (c.nome.toLowerCase().indexOf(find) >= 0 || c.regione.toLowerCase().indexOf(find) >= 0) {
+                    a.push(c);
+                }
+            });
+            partial = a;
+        }
+
+        partial = sort ? _.orderBy(partial, [sort.field], [sort.dir]) : partial;
+
+        result.count = partial.length;
+        if (page && page.size > 1) {
+            var ix = page.index * page.size;
+            for (var i = ix, n = 0; i < partial.length && n < page.size; i++ , n++) {
+                result.items.push(partial[i]);
+            }
+        }
+        else {
+            result.items = partial;
+        }
+
         //var reg = req.query.regione;
         //if (req.query.q) {
         //    var q = req.query.q;
