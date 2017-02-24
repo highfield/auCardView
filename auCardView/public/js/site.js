@@ -28,13 +28,14 @@ if (typeof Object.create !== 'function') {
         showSearch: true,
         showSort: true,
         showPage: true,
+        selectMode: 'none',
         pageSize: 15
     };
 
 
-    function searchController(owner, ctr) {
+    function searchController(owner, row) {
         function build() {
-            var cell = $('<div>').addClass('input-group').appendTo(ctr);
+            var cell = $('<div>').addClass('input-group').appendTo(cctr);
             var gclear = $('<span>').addClass('input-group-btn').appendTo(cell);
             var bclear = $('<button>').addClass('btn btn-default').attr('type', 'button').appendTo(gclear);
             $('<span>').addClass('glyphicon glyphicon-remove').appendTo(bclear);
@@ -44,9 +45,9 @@ if (typeof Object.create !== 'function') {
                 placeholder: 'Search for...'
             }).appendTo(cell);
 
-            var gsearch = $('<span>').addClass('input-group-btn').appendTo(cell);
-            var bsearch = $('<button>').addClass('btn btn-default').attr('type', 'button').appendTo(gsearch);
-            $('<span>').addClass('glyphicon glyphicon-search').appendTo(bsearch);
+            //var gsearch = $('<span>').addClass('input-group-btn').appendTo(cell);
+            //var bsearch = $('<button>').addClass('btn btn-default').attr('type', 'button').appendTo(gsearch);
+            //$('<span>').addClass('glyphicon glyphicon-search').appendTo(bsearch);
 
             bclear.on('click', function (e) {
                 e.preventDefault();
@@ -56,28 +57,39 @@ if (typeof Object.create !== 'function') {
             });
 
             input.on('input', function () {
-                //
+                deferrer.trigger();
+                //tfind = input.val().trim();
+                //owner.refresh(true);
             });
 
-            bsearch.on('click', function (e) {
-                e.preventDefault();
-                tfind = input.val().trim();
-                owner.refresh(true);
-            });
+            //bsearch.on('click', function (e) {
+            //    e.preventDefault();
+            //    tfind = input.val().trim();
+            //    owner.refresh(true);
+            //});
+        }
+
+        function search() {
+            tfind = input.val().trim();
+            owner.refresh(true);
+            deferrer.release();
         }
 
         var me = {}, vis = false, tfind;
+        var cctr = $('<div>').appendTo(row);
+        var deferrer = Deferrer(search, 700);
 
         me.getVisible = function () { return vis; }
         me.setVisible = function (v) {
             v = !!v;
             if (vis !== v) {
                 vis = v;
+                deferrer.release();
                 if (vis) {
                     build();
                 }
                 else {
-                    ctr.empty();
+                    cctr.empty();
                 }
                 owner.refresh(true);
             }
@@ -89,13 +101,19 @@ if (typeof Object.create !== 'function') {
             }
         }
 
+        me._measure = function () {
+        }
+
+        me._arrange = function () {
+        }
+
         return me;
     }
 
 
-    function sortController(owner, ctr) {
+    function sortController(owner, row) {
         function build() {
-            var cell = $('<div>').addClass('btn-group').css('float', 'right').appendTo(ctr);
+            var cell = $('<div>').addClass('btn-group').css('float', 'right').appendTo(cctr);
             var bselect = $('<button>').addClass('btn btn-default dropdown-toggle').attr({
                 type: 'button',
                 'data-toggle': 'dropdown',
@@ -113,6 +131,7 @@ if (typeof Object.create !== 'function') {
         }
 
         var me = {}, vis = false;
+        var cctr = $('<div>').appendTo(row);
 
         me.getVisible = function () { return vis; }
         me.setVisible = function (v) {
@@ -123,7 +142,7 @@ if (typeof Object.create !== 'function') {
                     build();
                 }
                 else {
-                    ctr.empty();
+                    cctr.empty();
                 }
                 owner.refresh();
             }
@@ -132,11 +151,17 @@ if (typeof Object.create !== 'function') {
         me._buildParams = function (params) {
         }
 
+        me._measure = function () {
+        }
+
+        me._arrange = function () {
+        }
+
         return me;
     }
 
 
-    function pageController(owner, ctr) {
+    function pageController(owner, row) {
         function update() {
             //navigation toolbar
             bctr.empty();
@@ -201,14 +226,15 @@ if (typeof Object.create !== 'function') {
         }
 
         function build() {
-            var bcell = $('<div>').addClass('col-lg-8').attr('aria-label', 'Page navigation').appendTo(ctr);
+            var bcell = $('<div>').addClass('col-lg-8').attr('aria-label', 'Page navigation').appendTo(cctr);
             bctr = $('<ul>').addClass('pagination').appendTo(bcell);
 
-            pcell = $('<div>').addClass('col-lg-4').appendTo(ctr);
+            pcell = $('<div>').addClass('col-lg-4').appendTo(cctr);
         }
 
         var me = {}, vis = false, bctr, pcell;
         var index, count, total, reliable = false, reqix = 0;
+        var cctr = $('<div>').appendTo(row);
 
         me.getVisible = function () { return vis; }
         me.setVisible = function (v) {
@@ -223,7 +249,7 @@ if (typeof Object.create !== 'function') {
                     update();
                 }
                 else {
-                    ctr.empty();
+                    cctr.empty();
                     bctr = pcell = null;
                 }
                 owner.refresh();
@@ -247,6 +273,67 @@ if (typeof Object.create !== 'function') {
             total = +info.count;
             reliable = true;
             update();
+        }
+
+        me._measure = function () {
+        }
+
+        me._arrange = function () {
+        }
+
+        return me;
+    }
+
+
+    function selectionController(owner, row) {
+        var me = {}, mode='none';
+
+        function build() {
+            //var bcell = $('<div>').addClass('col-lg-8').attr('aria-label', 'Page navigation').appendTo(cctr);
+            //bctr = $('<ul>').addClass('pagination').appendTo(bcell);
+
+            //pcell = $('<div>').addClass('col-lg-4').appendTo(cctr);
+        }
+
+        me.getMode = function () { return mode; }
+        me.setMode = function (v) {
+            if (mode !== v) {
+                switch (v) {
+                    case 'single':
+                    case 'multi':
+                        mode = v;
+                        break;
+
+                    default:
+                        mode = 'none';
+                        break;
+                }
+
+
+            }
+        }
+
+        me._measure = function () {
+        }
+
+        me._arrange = function () {
+        }
+
+        return me;
+    }
+
+
+    function Deferrer(callback, delay) {
+        var me = {}, tmr;
+
+        me.trigger = function () {
+            if (tmr) return;
+            tmr = setTimeout(callback, delay);
+        }
+
+        me.release = function () {
+            if (tmr) clearTimeout(tmr);
+            tmr = null;
         }
 
         return me;
@@ -280,7 +367,6 @@ if (typeof Object.create !== 'function') {
         }
 
         function updater() {
-            //mrow.empty();
             mrow.css('min-height', mrow.height());
 
             var params = {};
@@ -297,16 +383,6 @@ if (typeof Object.create !== 'function') {
                         if (data && data.items && data.items.constructor === Array) {
                             viewBuilder(data.items);
                             mrow.css('min-height', 0);
-                            //try {
-                            //    data.items.forEach(function (item) {
-                            //        var vi = me.options.itemViewBuilder(item);
-                            //        mrow.append(vi);
-                            //    });
-                            //}
-                            //catch (err) {
-                            //    console.error(err);
-                            //    //TODO
-                            //}
                         }
                     }
                     finally {
@@ -320,46 +396,34 @@ if (typeof Object.create !== 'function') {
                 });
         }
 
-        var deferrer = (function () {
-            var me = {}, tmr;
+        function resize() {
+            //header
+            var hh
+        }
 
-            me.trigger = function () {
-                if (tmr) {
-                    //
-                }
-                else {
-                    tmr = setTimeout(function () {
-                        updater();
-                    }, 200);
-                }
-            }
-
-            me.release = function () {
-                tmr = null;
-            }
-
-            return me;
-        })();
-
-        var me = {}, ctlSearch, ctlSort, ctlPage, mrow, dirty;
+        var me = {}, ctlSearch, ctlSort, ctlPage, ctlSelect, mrow, dirty;
+        var deferrer = Deferrer(updater, 200);
 
         me.getSearchController = function () { return ctlSearch; }
         me.getSortController = function () { return ctlSort; }
         me.getPageController = function () { return ctlPage; }
+        me.getSelectionController = function () { return ctlSelect; }
 
         me.init = function (options, elem) {
             me.$elem = $(elem);
             me.options = $.extend({}, $.fn.auCardView.options, options);
-            //me.overrideOptions();
 
             me.$elem.addClass('auCardView');
             var mainctr = $("<div>").addClass('container-fluid auCardView-container').appendTo(me.$elem);
 
             var hrow = $('<div>').addClass('row auCardView-header').appendTo(mainctr);
-            ctlSearch = searchController(me, $('<div>').addClass('col-lg-8').appendTo(hrow));
+            ctlSelect = selectionController(me, hrow);
+            ctlSelect.setVisible(me.options.showSearch);
+
+            ctlSearch = searchController(me, hrow);
             ctlSearch.setVisible(me.options.showSearch);
 
-            ctlSort = sortController(me, $('<div>').addClass('col-lg-4').appendTo(hrow));
+            ctlSort = sortController(me, hrow);
             ctlSort.setVisible(me.options.showSort);
 
             mrow = $('<div>').addClass('row auCardView-body').appendTo(mainctr);
@@ -368,14 +432,6 @@ if (typeof Object.create !== 'function') {
             ctlPage = pageController(me, frow);
             ctlPage.setVisible(me.options.showPage);
         };
-
-        //me.overrideOptions = function () {
-        //    $.each(me.options, function ($option) {
-        //        //if (typeof (self.$elem.data('jqtile-' + $option)) != "undefined") {
-        //        //    self.options[$option] = self.$elem.data('jqtile-' + $option);
-        //        //}
-        //    });
-        //};
 
         me.refresh = function (d) {
             if (d) dirty = true;
