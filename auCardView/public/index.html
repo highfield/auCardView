@@ -30,92 +30,80 @@
             <!-- Collect the nav links, forms, and other content for toggling -->
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
-                    <li class="active"><a href="#">Link <span class="sr-only">(current)</span></a></li>
-                    <li><a href="#">Link</a></li>
+                    <li><a href="#sect1">Caso 1</a></li>
+                    <li><a href="#sect2">Caso 2</a></li>
                 </ul>
             </div>
         </div>
     </nav>
 
     <div class="container">
+        <section id="sect0">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="panel panel-success">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Global options</h3>
+                        </div>
+                        <div class="panel-body">
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" id="searchbox"> Search feature
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" id="sortbox"> Sort feature
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" id="pagerbox"> Pager feature
+                                </label>
+                            </div>
+                            <label class="radio-inline">
+                                <input type="radio" name="inlineRadioOptions" id="selmode1" value="none"> No selection
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="inlineRadioOptions" id="selmode2" value="single"> Single selection
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="inlineRadioOptions" id="selmode3" value="multi"> Multiple selection
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="panel panel-info">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Card options</h3>
+                        </div>
+                        <div class="panel-body">
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" id="card_collapsible"> Collapsible (but North Italia)
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" id="card_collapsed"> Collapsed (but central Italia)
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" id="card_selectable"> Selectable (but South Italia)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section id="sect1">
             <h1>Caso 1</h1>
             <div id="cv1">
-                <!--<div class="container-fluid">
-                    <div class="row">
-                        <div class="col-lg-8"></div>
-                        <div class="col-lg-4"></div>
-                    </div>
-                </div>-->
-
-                <!--<div class="container-fluid">
-                    <div class="row">
-                        <div class="col-lg-6 col-lg-offset-6">
-                            <div class="input-group">
-                                <span class="input-group-btn">
-                                    <button class="btn btn-default" type="button"><span class="glyphicon glyphicon-remove"></span></button>
-                                </span>
-                                <input type="text" class="form-control" placeholder="Search for...">
-                                <span class="input-group-btn">
-                                    <button class="btn btn-default" type="button"><span class="glyphicon glyphicon-search"></span></button>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="card">
-                            <div class="card-block">
-                                <h4 class="card-title">Card title</h4>
-                                <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
-                                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                                <a href="#" class="card-link">Card link</a>
-                                <a href="#" class="card-link">Another link</a>
-                            </div>
-                        </div>
-                        <div class="card">
-                            <div class="card-block">
-                                <h4 class="card-title">Card title</h4>
-                                <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
-                                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                                <a href="#" class="card-link">Card link</a>
-                                <a href="#" class="card-link">Another link</a>
-                            </div>
-                        </div>
-                        <div class="card">
-                            <div class="card-block">
-                                <h4 class="card-title">Card title</h4>
-                                <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
-                                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                                <a href="#" class="card-link">Card link</a>
-                                <a href="#" class="card-link">Another link</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-lg-6" aria-label="Page navigation">
-                            <ul class="pagination">
-                                <li>
-                                    <a href="#" aria-label="Previous">
-                                        <span aria-hidden="true">&laquo;</span>
-                                    </a>
-                                </li>
-                                <li><a href="#">1</a></li>
-                                <li><a href="#">2</a></li>
-                                <li><a href="#">3</a></li>
-                                <li><a href="#">4</a></li>
-                                <li><a href="#">5</a></li>
-                                <li>
-                                    <a href="#" aria-label="Next">
-                                        <span aria-hidden="true">&raquo;</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="col-lg-6">
-                            <div>Page 1 of 10</div>
-                        </div>
-                    </div>
-                </div>-->
             </div>
         </section>
 
@@ -123,177 +111,9 @@
         <section id="sect2">
             <h1>Caso 2</h1>
             <div id="cv2" style="width:480px; height:640px; background: azure">
-                <div class="container-fluid">
-                    <div class="row">
-                        <div class="col-lg-8">
-                            <div class="input-group">
-                                <span class="input-group-btn">
-                                    <button class="btn btn-default" type="button"><span class="glyphicon glyphicon-remove"></span></button>
-                                </span>
-                                <input type="text" class="form-control" placeholder="Search for...">
-                                <span class="input-group-btn">
-                                    <button class="btn btn-default" type="button"><span class="glyphicon glyphicon-search"></span></button>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="col-lg-4">
-                            <div class="btn-group" style="float:right">
-                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    Action <span class="caret"></span>
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><a href="#">Action</a></li>
-                                    <li><a href="#">Another action</a></li>
-                                    <li><a href="#">Something else here</a></li>
-                                    <li role="separator" class="divider"></li>
-                                    <li><a href="#">Separated link</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th width="80px">Id</th>
-                                    <th width="180px">Name</th>
-                                    <th width="280px">Notes</th>
-                                </tr>
-                            </thead>
-                        </table>
-                    </div>
-                    <div style="overflow-y:auto">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h4 class="panel-title">
-                                    <a data-toggle="collapse" href="#collapse1" aria-expanded="false" aria-controls="collapse1">
-                                        <i class="fa fa-bath" aria-hidden="true"></i>Card title
-                                    </a>
-                                </h4>
-                            </div>
-                            <div class="collapse" id="collapse1">
-                                <div class="panel-body">
-                                    <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
-                                    <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                                    <a href="#" class="card-link">Card link</a>
-                                    <a href="#" class="card-link">Another link</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h4 class="panel-title">
-                                    <a data-toggle="collapse" href="#collapse2" aria-expanded="false" aria-controls="collapse2">
-                                        <i class="fa fa-bath" aria-hidden="true"></i>Card title
-                                    </a>
-                                </h4>
-                                <p>Subtitle</p>
-                            </div>
-                            <div class="collapse" id="collapse2">
-                                <div class="panel-body">
-                                    <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
-                                    <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                                    <a href="#" class="card-link">Card link</a>
-                                    <a href="#" class="card-link">Another link</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h4 class="panel-title">
-                                    <a data-toggle="collapse" href="#collapse3" aria-expanded="false" aria-controls="collapse3">
-                                        <i class="fa fa-bath" aria-hidden="true"></i>Card title
-                                    </a>
-                                </h4>
-                            </div>
-                            <div class="collapse" id="collapse3">
-                                <div class="panel-body">
-                                    <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
-                                    <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                                    <a href="#" class="card-link">Card link</a>
-                                    <a href="#" class="card-link">Another link</a>
-                                </div>
-                            </div>
-                        </div>
-                        <!--<div class="card">
-                            <div class="card-block">
-                                <h4 class="card-title">Card title</h4>
-                                <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
-                                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                                <a href="#" class="card-link">Card link</a>
-                                <a href="#" class="card-link">Another link</a>
-                            </div>
-                        </div>
-                        <div class="card">
-                            <div class="card-block">
-                                <h4 class="card-title">Card title</h4>
-                                <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
-                                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                                <a href="#" class="card-link">Card link</a>
-                                <a href="#" class="card-link">Another link</a>
-                            </div>
-                        </div>
-                        <div class="card">
-                            <div class="card-block">
-                                <h4 class="card-title">Card title</h4>
-                                <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
-                                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                                <a href="#" class="card-link">Card link</a>
-                                <a href="#" class="card-link">Another link</a>
-                            </div>
-                        </div>-->
-                    </div>
-                    <div class="row">
-                        <div class="col-lg-8" aria-label="Page navigation">
-                            <ul class="pagination">
-                                <li>
-                                    <a href="#" aria-label="Previous">
-                                        <span aria-hidden="true">&laquo;</span>
-                                    </a>
-                                </li>
-                                <li><a href="#">1</a></li>
-                                <li><a href="#">2</a></li>
-                                <li><a href="#">3</a></li>
-                                <li><a href="#">4</a></li>
-                                <li><a href="#">5</a></li>
-                                <li>
-                                    <a href="#" aria-label="Next">
-                                        <span aria-hidden="true">&raquo;</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="col-lg-4">
-                            <div>Page 1 of 10</div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </section>
 
-
-        <section id="sect-bootgrid">
-            <h1>Bootgrid</h1>
-            <table id="grid-basic" class="table table-condensed table-hover table-striped">
-                <thead>
-                    <tr>
-                        <th data-column-id="id">ID</th>
-                        <th data-column-id="nome">Nome</th>
-                        <th data-column-id="sigla_automobilistica">Sigla</th>
-                        <th data-column-id="latitudine" data-type="numeric">Lat</th>
-                        <th data-column-id="longitudine" data-type="numeric">Long</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!--<tr>
-                        <td>10238</td>
-                        <td>eduardo@pingpong.com</td>
-                        <td>14.10.2013</td>
-                    </tr>-->
-                </tbody>
-            </table>
-
-        </section>
     </div>
 
     <script src="/libs/jquery-3.1.1.min.js"></script>

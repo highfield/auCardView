@@ -50,17 +50,28 @@ a, a:link, a:active, a:visited, a:hover {
 .auCardView-header {
     /*margin-left: 0px !important;*/
     /*margin-right: 0px !important;*/
+    padding: 10px 0px;
 }
 
 .auCardView-body {
 }
 
 .auCardView-footer {
-    margin-left: 0px !important;
-    margin-right: 0px !important;
+    /*margin-left: 0px !important;*/
+    /*margin-right: 0px !important;*/
+}
+
+.auCardView-toolbar-cell {
+    display: inline-block;
+    position: relative;
+    vertical-align: top;
 }
 
 .auCardView-card {
+    margin: 5px 0px;
+}
+
+.auCardView-card-panel {
     /*border-color: transparent;*/
     border: none !important;
 }

@@ -1063,7 +1063,10 @@ router.get('/citta', function (req, res) {
             partial = a;
         }
 
-        partial = sort ? _.orderBy(partial, [sort.field], [sort.dir]) : partial;
+        if (sort && sort.field) {
+            partial = _.orderBy(partial, [sort.field], [sort.dir]);
+            result.sort = sort;
+        }
 
         result.count = partial.length;
         if (page && +page.size > 1) {
