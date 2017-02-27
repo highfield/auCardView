@@ -33,6 +33,7 @@
   <ItemGroup>
     <Compile Include="app.js" />
     <Compile Include="public\js\site.js" />
+    <Compile Include="public\libs\aucardview\aucardview.js" />
     <Compile Include="public\libs\bootstrap-3.3.7-dist\js\bootstrap.js" />
     <Compile Include="public\libs\bootstrap-3.3.7-dist\js\bootstrap.min.js" />
     <Compile Include="public\libs\bootstrap-3.3.7-dist\js\npm.js" />
@@ -48,6 +49,7 @@
     <Content Include="package.json" />
     <Content Include="public\css\styles.css" />
     <Content Include="public\index.html" />
+    <Content Include="public\libs\aucardview\aucardview.css" />
     <Content Include="public\libs\bootstrap-3.3.7-dist\css\bootstrap-theme.css" />
     <Content Include="public\libs\bootstrap-3.3.7-dist\css\bootstrap-theme.css.map" />
     <Content Include="public\libs\bootstrap-3.3.7-dist\css\bootstrap-theme.min.css" />
@@ -62,7 +64,6 @@
     <Content Include="public\libs\bootstrap-3.3.7-dist\fonts\glyphicons-halflings-regular.woff" />
     <Content Include="public\libs\bootstrap-3.3.7-dist\fonts\glyphicons-halflings-regular.woff2" />
     <Content Include="public\libs\jquery-bootgrid\jquery.bootgrid-1.3.1.zip" />
-    <Content Include="public\libs\jquery-bootgrid\jQuery.Bootgrid.1.3.1.nupkg" />
     <Content Include="public\libs\jquery-bootgrid\jquery.bootgrid.css" />
     <Content Include="public\libs\jquery-bootgrid\jquery.bootgrid.min.css" />
     <Content Include="README.md" />
@@ -79,6 +80,7 @@
     <Folder Include="public\libs\bootstrap-3.3.7-dist\css\" />
     <Folder Include="public\libs\bootstrap-3.3.7-dist\fonts\" />
     <Folder Include="public\libs\bootstrap-3.3.7-dist\js\" />
+    <Folder Include="public\libs\aucardview\" />
     <Folder Include="public\libs\jquery-bootgrid\" />
     <Folder Include="routes\" />
     <Folder Include="typings\" />

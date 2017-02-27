@@ -8,10 +8,10 @@
     <meta name="mobile-web-app-capable" content="yes">
     <title>Cardview demo</title>
     <link rel="stylesheet" type="text/css" href="/libs/bootstrap-3.3.7-dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" type="text/css" href="/libs/bootstrap-3.3.7-dist/css/bootstrap-theme.min.css" />
+    <!--<link rel="stylesheet" type="text/css" href="/libs/bootstrap-3.3.7-dist/css/bootstrap-theme.min.css" />-->
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
 
-    <link rel='stylesheet' href='/libs/jquery-bootgrid/jquery.bootgrid.css' />
+    <link rel='stylesheet' href='/libs/aucardview/aucardview.css' />
     <link rel='stylesheet' href='/css/styles.css' />
 </head>
 <body>
@@ -40,7 +40,7 @@
     <div class="container">
         <section id="sect0">
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="panel panel-success">
                         <div class="panel-heading">
                             <h3 class="panel-title">Global options</h3>
@@ -61,20 +61,26 @@
                                     <input type="checkbox" id="pagerbox"> Pager feature
                                 </label>
                             </div>
-                            <label class="radio-inline">
-                                <input type="radio" name="inlineRadioOptions" id="selmode1" value="none"> No selection
-                            </label>
-                            <label class="radio-inline">
-                                <input type="radio" name="inlineRadioOptions" id="selmode2" value="single"> Single selection
-                            </label>
-                            <label class="radio-inline">
-                                <input type="radio" name="inlineRadioOptions" id="selmode3" value="multi"> Multiple selection
-                            </label>
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" name="inlineRadioOptions" id="selmode1" value="none"> No selection
+                                </label>
+                            </div>
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" name="inlineRadioOptions" id="selmode2" value="single"> Single selection
+                                </label>
+                            </div>
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" name="inlineRadioOptions" id="selmode3" value="multi"> Multiple selection
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="panel panel-info">
                         <div class="panel-heading">
                             <h3 class="panel-title">Card options</h3>
@@ -95,22 +101,38 @@
                                     <input type="checkbox" id="card_selectable"> Selectable (but South Italia)
                                 </label>
                             </div>
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" id="card_colorized"> Colorize panels
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="panel panel-warning">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Events</h3>
+                        </div>
+                        <div class="panel-body">
+                            <textarea rows="8" cols="32" id="evlog" readonly></textarea>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="sect1">
-            <h1>Caso 1</h1>
-            <div id="cv1">
+        <section id="sect2">
+            <h1>Caso 2</h1>
+            <div id="cv2" style="width:480px; height:640px; background: azure">
             </div>
         </section>
 
 
-        <section id="sect2">
-            <h1>Caso 2</h1>
-            <div id="cv2" style="width:480px; height:640px; background: azure">
+        <section id="sect1">
+            <h1>Caso 1</h1>
+            <div id="cv1">
             </div>
         </section>
 
@@ -120,7 +142,7 @@
     <script src="/libs/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
     <script src="/libs/lodash.min.js"></script>
 
-    <script src="/libs/jquery-bootgrid/jquery.bootgrid.js"></script>
+    <script src="/libs/aucardview/aucardview.js"></script>
     <script src="/js/site.js"></script>
 </body>
 </html>

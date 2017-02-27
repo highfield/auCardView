@@ -1080,37 +1080,11 @@ router.get('/citta', function (req, res) {
         else {
             result.items = partial;
         }
-
-        //var reg = req.query.regione;
-        //if (req.query.q) {
-        //    var q = req.query.q;
-        //    for (var i = 0; i < citta.length; i++) {
-        //        var c = citta[i];
-        //        if (c.id_regione == reg && c.nome.indexOf(q) >= 0) {
-        //            result.items.push({
-        //                id: c.id,
-        //                text: c.nome
-        //            });
-        //        }
-        //    }
-        //}
-        //else if (req.query.id) {
-        //    var q = req.query.id;
-        //    for (var i = 0; i < citta.length; i++) {
-        //        var c = citta[i];
-        //        if (c.id == q) {
-        //            result.items.push({
-        //                id: c.id,
-        //                text: c.nome
-        //            });
-        //        }
-        //    }
-        //}
-        //else {
-        //    Array.prototype.push.apply(result.items, citta);
-        //}
     }
-    res.json(result);
+
+    setTimeout(function () {
+        res.json(result);
+    }, 1000);
 });
 
 module.exports = router;
