@@ -1,5 +1,7 @@
 ﻿
 $(function () {
+    "use strict";
+
 
     function loader(params) {
         var d = $.Deferred();

@@ -42,7 +42,6 @@
     <Compile Include="public\libs\bootstrap3-dialog\gulpfile.js" />
     <Compile Include="public\libs\bootstrap3-dialog\src\js\bootstrap-dialog.js" />
     <Compile Include="public\libs\jquery-3.1.1.min.js" />
-    <Compile Include="public\libs\jquery-bootgrid\jquery.bootgrid.fa.js" />
     <Compile Include="public\libs\jquery-bootgrid\jquery.bootgrid.fa.min.js" />
     <Compile Include="public\libs\jquery-bootgrid\jquery.bootgrid.js" />
     <Compile Include="public\libs\jquery-bootgrid\jquery.bootgrid.min.js" />
@@ -118,7 +117,6 @@
     <Folder Include="public\libs\bootstrap3-dialog\src\css\" />
     <Folder Include="public\libs\bootstrap3-dialog\src\js\" />
     <Folder Include="public\libs\bootstrap3-dialog\src\less\" />
-    <Folder Include="public\libs\jquery-bootgrid\" />
     <Folder Include="routes\" />
     <Folder Include="typings\" />
     <Folder Include="typings\globals\" />
