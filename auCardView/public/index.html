@@ -10,6 +10,7 @@
     <link rel="stylesheet" type="text/css" href="/libs/bootstrap-3.3.7-dist/css/bootstrap.min.css" />
     <!--<link rel="stylesheet" type="text/css" href="/libs/bootstrap-3.3.7-dist/css/bootstrap-theme.min.css" />-->
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="/libs/bootstrap3-dialog/dist/css/bootstrap-dialog.min.css" />
 
     <link rel='stylesheet' href='/libs/aucardview/aucardview.css' />
     <link rel='stylesheet' href='/css/styles.css' />
@@ -30,8 +31,9 @@
             <!-- Collect the nav links, forms, and other content for toggling -->
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
-                    <li><a href="#sect1">Caso 1</a></li>
-                    <li><a href="#sect2">Caso 2</a></li>
+                    <li><a href="#sect_constrained">Constrained</a></li>
+                    <li><a href="#sect_free">Free layout</a></li>
+                    <li><a href="#" id="btn_modal">Modal dialog</a></li>
                 </ul>
             </div>
         </div>
@@ -123,16 +125,16 @@
             </div>
         </section>
 
-        <section id="sect2">
-            <h1>Caso 2</h1>
-            <div id="cv2" style="width:480px; height:640px; background: azure">
+        <section id="sect_constrained">
+            <h1>Constrained</h1>
+            <div id="cv1" style="width:480px; height:640px; background: azure">
             </div>
         </section>
 
 
-        <section id="sect1">
-            <h1>Caso 1</h1>
-            <div id="cv1">
+        <section id="sect_free">
+            <h1>Free layout</h1>
+            <div id="cv2" style="height: 800px">
             </div>
         </section>
 
@@ -140,6 +142,7 @@
 
     <script src="/libs/jquery-3.1.1.min.js"></script>
     <script src="/libs/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+    <script src="/libs/bootstrap3-dialog/dist/js/bootstrap-dialog.min.js"></script>
     <script src="/libs/lodash.min.js"></script>
 
     <script src="/libs/aucardview/aucardview.js"></script>

@@ -8,18 +8,26 @@
 }
 
 .auCardView-header {
+    position: absolute;
+    width: 100%;
+    top: 0px;
 }
 
 .auCardView-body {
     overflow-y: auto;
+    position: absolute;
+    width: 100%;
 }
 
 .auCardView-footer {
+    position: absolute;
+    width: 100%;
+    bottom: 80px;
 }
 
 .auCardView-toolbar-cell {
     display: inline-block;
-    position: relative;
+    position: absolute;
     vertical-align: top;
 }
 

@@ -58,6 +58,42 @@ $(function () {
     var cv2 = $('#cv2').data('auCardView');
 
 
+    $('#btn_modal').on('click', function () {
+        var opts = {
+            showSearch: true,
+            showSort: true,
+            showPage: true,
+            selectMode: 'multi',
+            loader: loader,
+            panelViewUpdater: panelViewUpdater,
+            sort: {
+                active: { field: 'nome', dir: 'asc' },
+                options: [
+                    { field: 'nome', label: 'Nome' }
+                ]
+            }
+        };
+
+        var ctr = $('<div>').css({
+            width: '100%',
+            height: 640
+        });
+        ctr.auCardView(opts);
+
+        BootstrapDialog.show({
+            title: 'My dialog',
+            message: ctr,
+            buttons: [{
+                label: 'Close',
+                action: function (dialogRef) {
+                    dialogRef.close();
+                }
+            }]
+        });
+    });
+
+
+
     /**
     * demo controls
     */

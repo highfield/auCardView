@@ -137,8 +137,16 @@ if (typeof Object.create !== 'function') {
             return vis ? cctr.width() : 0;
         }
 
-        me._arrange = function (l, w) {
-            cctr.css({ left: l, width: w });
+        me._arrange = function (l, r) {
+            if (l == null) {
+                cctr.css({ right: r });
+            }
+            else if (r == null) {
+                cctr.css({ left: l });
+            }
+            else {
+                cctr.css({ left: l, width: r - l });
+            }
         }
 
         return me;
@@ -162,6 +170,7 @@ if (typeof Object.create !== 'function') {
         }
 
         function update() {
+            if (!bselect) return;
             var sortinfo = owner.options.sort || {};
             var options = sortinfo.options || [];
             if (!activeDir) {
@@ -255,8 +264,16 @@ if (typeof Object.create !== 'function') {
             return vis ? cctr.width() : 0;
         }
 
-        me._arrange = function (l, w) {
-            cctr.css({ left: l, width: w });
+        me._arrange = function (l, r) {
+            if (l == null) {
+                cctr.css({ right: r });
+            }
+            else if (r == null) {
+                cctr.css({ left: l });
+            }
+            else {
+                cctr.css({ left: l, width: r - l });
+            }
         }
 
         return me;
@@ -387,8 +404,16 @@ if (typeof Object.create !== 'function') {
             return vis ? cctr.width() : 0;
         }
 
-        me._arrange = function (l, w) {
-            cctr.css({ left: l, width: w });
+        me._arrange = function (l, r) {
+            if (l == null) {
+                cctr.css({ right: r });
+            }
+            else if (r == null) {
+                cctr.css({ left: l });
+            }
+            else {
+                cctr.css({ left: l, width: r - l });
+            }
         }
 
         return me;
@@ -488,8 +513,16 @@ if (typeof Object.create !== 'function') {
             return (mode === 'multi') ? cctr.width() : 0;
         }
 
-        me._arrange = function (l, w) {
-            cctr.css({ left: l, width: w });
+        me._arrange = function (l, r) {
+            if (l == null) {
+                cctr.css({ right: r });
+            }
+            else if (r == null) {
+                cctr.css({ left: l });
+            }
+            else {
+                cctr.css({ left: l, width: r - l });
+            }
         }
 
         return me;
@@ -740,55 +773,32 @@ if (typeof Object.create !== 'function') {
             var wrow = mrow.width(), margin = 10;
 
             //header
-            var l = 0;
+            var l = 0, r = 0;
             var wl = ctlSelect._measure();
             var ws = ctlSearch._measure();
             var wr = ctlSort._measure();
             if (wl) {
-                ctlSelect._arrange(l, wl);
-                l += margin;
+                ctlSelect._arrange(l, null);
+                l += wl + margin;
             }
             if (ws) {
                 ws = wrow;
                 if (wl) ws -= wl + margin;
                 if (wr) ws -= wr + margin;
                 ws = Math.min(200, ws);
-                ctlSearch._arrange(l, ws);
+                ctlSearch._arrange(l, l + ws);
             }
             if (wr) {
-                l = wrow - wr;
-                if (wl) l -= wl;
-                if (ws) l -= ws;
-                ctlSort._arrange(l, wr);
+                ctlSort._arrange(null, r);
             }
+            mrow.parent().css('top', (wl || ws || wr) ? 56 : 0);
 
             //footer
+            var wp = ctlPage._measure();
             ctlPage._arrange(0, wrow);
-
-            //height
-            var hfix = getFixedHeight(me.$elem[0]);
-            if (hfix !== null) {
-                mrow.parent().css('height', hfix - hrow.height() - frow.height());
-            }
+            mrow.parent().css('bottom', wp ? 80 : 0);
         }
 
-
-        function getFixedHeight(element) {
-            //see: http://jsfiddle.net/j33aK/
-            var element = me.$elem[0];
-            var inOverflow = window.getComputedStyle(element).overflow, inHeight = element.clientHeight;
-            element.style.overflow = 'hidden';
-
-            var tempDiv = document.createElement('div');
-            tempDiv.style.height = element.clientHeight + 'px';
-            element.appendChild(tempDiv);
-
-            var hfix = (element.clientHeight === inHeight) ? inHeight : null;
-
-            element.removeChild(tempDiv);
-            element.style.overflow = inOverflow;
-            return hfix;
-        }
 
         $(window).on('resize', resize);
 
