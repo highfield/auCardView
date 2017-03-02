@@ -129,7 +129,7 @@ if (typeof Object.create !== 'function') {
 
         me._buildParams = function (params) {
             if (vis && tfind && tfind.length) {
-                params.find = tfind;
+                params.find = { text: tfind };
             }
         }
 
@@ -742,7 +742,7 @@ if (typeof Object.create !== 'function') {
             ctlPage._buildParams(params, dirty);
             dirty = false;
 
-            $.when(me.options.loader(params))
+            $.when(me.options.controller.load(params))
                 .then(function (data) {
                     //alert(data.count);
                     spinLayer.hide();

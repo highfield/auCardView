@@ -2,19 +2,24 @@
 $(function () {
     "use strict";
 
+    var controller = (function () {
+        var me = {};
 
-    function loader(params) {
-        var d = $.Deferred();
+        me.load = function (params) {
+            var d = $.Deferred();
 
-        $.getJSON("citta", params)
-            .done(function (data) {
-                d.resolve(data);
-            }).fail(function (err) {
-                d.reject(err);
-            });
+            $.getJSON("citta", params)
+                .done(function (data) {
+                    d.resolve(data);
+                }).fail(function (err) {
+                    d.reject(err);
+                });
 
-        return d.promise();
-    }
+            return d.promise();
+        }
+
+        return me;
+    })();
 
 
     function panelViewUpdater(panel, data) {
@@ -44,7 +49,7 @@ $(function () {
         //showSort: true,
         //showPage: true,
         //selectMode: 'multi',
-        loader: loader,
+        controller: controller,
         panelViewUpdater: panelViewUpdater,
         sort: {
             active: { field: 'nome', dir: 'asc' },

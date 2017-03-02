@@ -117,6 +117,7 @@
     <Folder Include="public\libs\bootstrap3-dialog\src\css\" />
     <Folder Include="public\libs\bootstrap3-dialog\src\js\" />
     <Folder Include="public\libs\bootstrap3-dialog\src\less\" />
+    <Folder Include="public\libs\jquery-bootgrid\" />
     <Folder Include="routes\" />
     <Folder Include="typings\" />
     <Folder Include="typings\globals\" />

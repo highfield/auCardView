@@ -989,6 +989,55 @@ var citta = [{
     }];
 
 
+function pager(source, query, options) {
+    query = query || {};
+    const result = { items: [] };
+
+    const find = query.find;
+    const sort = query.sort;
+    const page = query.page;
+
+    var partial = source;
+    if (find) {
+        var t = find.text || '';
+        if (t.length) {
+            var re = new RegExp(t, find.opts || 'ig');
+            partial = partial.filter(o => options.finder(o, re));
+            result.find = find;
+        }
+    }
+
+    if (sort && sort.field) {
+        partial = _.orderBy(partial, [sort.field], [sort.dir]);
+        result.sort = sort;
+    }
+
+    result.count = partial.length;
+    if (page && +page.size > 1) {
+        if (query.selected) {
+            for (var i = 0; i < partial.length; i++) {
+                if (options.selector(query.selected)(partial[i])) {
+                    page.index = Math.floor(i / page.size);
+                    break;
+                }
+            }
+        }
+
+        var maxPages = Math.max(1, Math.ceil(partial.length / page.size));
+        var index = Math.max(0, Math.min(+page.index, maxPages - 1));
+        result.page = { index: index, count: maxPages };
+        for (var i = index * page.size, n = 0; i < partial.length && n < +page.size; i++ , n++) {
+            result.items.push(partial[i]);
+        }
+    }
+    else {
+        result.items = partial;
+    }
+    return result;
+}
+
+
+
 /* GET home page. */
 router.get('/', function (req, res) {
     res.render('index', { title: 'Express' });
@@ -1030,57 +1079,29 @@ router.get('/regioni', function (req, res) {
 
 
 router.get('/citta', function (req, res) {
-    var result = {
-        items: []
-    };
-    if (req.query) {
-        var where = req.query.where || {};
-        var find = (req.query.find || '').toLowerCase();
-        var sort = req.query.sort;
-        var page = req.query.page;
 
-        var partial = [];
-        citta.forEach(function (c) {
-            if (where.id === c.id || where.id_regione === c.id_regione || where.id == null && where.id_regione == null) {
-                var cc = _.clone(c);
-                for (var i = 0; i < regioni.length; i++) {
-                    if (cc.id_regione == regioni[i].id) {
-                        cc.regione = regioni[i].nome;
-                        break;
-                    }
-                }
-                partial.push(cc);
-            }
-        });
-
-        if (find.length) {
-            var a = [];
-            partial.forEach(function (c) {
-                if (c.nome.toLowerCase().indexOf(find) >= 0 || c.regione.toLowerCase().indexOf(find) >= 0) {
-                    a.push(c);
-                }
-            });
-            partial = a;
-        }
-
-        if (sort && sort.field) {
-            partial = _.orderBy(partial, [sort.field], [sort.dir]);
-            result.sort = sort;
-        }
-
-        result.count = partial.length;
-        if (page && +page.size > 1) {
-            var maxPages = Math.max(1, Math.ceil(partial.length / page.size));
-            var index = Math.max(0, Math.min(+page.index, maxPages - 1));
-            result.page = { index: index, count: maxPages };
-            for (var i = index * page.size, n = 0; i < partial.length && n < +page.size; i++ , n++) {
-                result.items.push(partial[i]);
+    var subset = citta.map(c => {
+        var cc = _.clone(c);
+        for (var i = 0; i < regioni.length; i++) {
+            if (cc.id_regione == regioni[i].id) {
+                cc.regione = regioni[i].nome;
+                break;
             }
         }
-        else {
-            result.items = partial;
-        }
+        return cc;
+    });
+
+    var options = {};
+    options.finder = function (item, re) {
+        if (re.test(item.nome)) return true;
+        if (re.test(item.regione)) return true;
     }
+
+    options.selector = function (id) {
+        return o => o.id === id;
+    }
+
+    var result = pager(subset, req.query, options);
 
     setTimeout(function () {
         res.json(result);
