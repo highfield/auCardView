@@ -81,7 +81,8 @@ if (typeof Object.create !== 'function') {
                 e.preventDefault();
                 tfind = '';
                 input.val(tfind);
-                owner.refresh(true);
+                owner.reset();
+                owner.refresh();
             });
 
             input.on('input', function () {
@@ -99,7 +100,8 @@ if (typeof Object.create !== 'function') {
 
         function search() {
             tfind = input.val().trim();
-            owner.refresh(true);
+            owner.reset();
+            owner.refresh();
             deferrer.release();
         }
 
@@ -122,7 +124,8 @@ if (typeof Object.create !== 'function') {
                     cctr.empty();
                     cctr.css('display', 'none');
                 }
-                owner.refresh(!!tfind);
+                if (!!tfind) owner.reset();
+                owner.refresh();
                 tfind = null;
             }
         }
@@ -218,7 +221,8 @@ if (typeof Object.create !== 'function') {
         function reqsort(e) {
             if (e) e.preventDefault();
             reqSetting = $(this).data('setting');
-            owner.refresh(true);
+            owner.reset();
+            owner.refresh();
         }
 
         var me = {}, vis = false, bselect, ul, activeField, activeDir, reqSetting;
@@ -243,7 +247,8 @@ if (typeof Object.create !== 'function') {
                     cctr.empty();
                     cctr.css('display', 'none');
                 }
-                owner.refresh(true);
+                owner.reset();
+                owner.refresh();
             }
         }
 
@@ -686,11 +691,18 @@ if (typeof Object.create !== 'function') {
 
 
     function Deferrer(callback, delay) {
-        var me = {}, tmr;
+        var me = {}, tmr, cbargs;
 
-        me.trigger = function () {
-            if (tmr) return;
-            tmr = setTimeout(callback, delay);
+        me.trigger = function (args) {
+            if (tmr) {
+                if (!args) return;
+                clearTimeout(tmr);
+            }
+            cbargs = args;
+            tmr = setTimeout(function () {
+                callback(cbargs || {});
+                cbargs = null;
+            }, delay);
         }
 
         me.release = function () {
@@ -731,7 +743,7 @@ if (typeof Object.create !== 'function') {
             }
         }
 
-        function updater() {
+        function updater(args) {
             spinLayer.show();
             resize();
             mrow.css('min-height', mrow.height());
@@ -742,7 +754,8 @@ if (typeof Object.create !== 'function') {
             ctlPage._buildParams(params, dirty);
             dirty = false;
 
-            $.when(me.options.controller.load(params))
+            var action = args.action || 'load';
+            $.when(me.options.controller[action](params, args.data))
                 .then(function (data) {
                     //alert(data.count);
                     spinLayer.hide();
@@ -837,12 +850,13 @@ if (typeof Object.create !== 'function') {
             $('<div>').addClass('auCardView-spinner').appendTo($('<div>').appendTo(spinLayer));
         };
 
-        me.refresh = function (d) {
-            if (d) dirty = true;
-            deferrer.trigger();
+        me.reset = function () { dirty = true; }
+
+        me.refresh = function (args) {
+            deferrer.trigger(args);
         }
 
-        me.refresh(true);
+        me.refresh();
         return me;
     }
 

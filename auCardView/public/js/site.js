@@ -71,7 +71,7 @@ $(function () {
             showSort: true,
             showPage: true,
             selectMode: 'multi',
-            loader: loader,
+            controller: controller,
             panelViewUpdater: panelViewUpdater,
             sort: {
                 active: { field: 'nome', dir: 'asc' },
