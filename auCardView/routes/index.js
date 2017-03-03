@@ -990,43 +990,46 @@ var citta = [{
 
 
 function pager(source, query, options) {
+    function fsort(o) {
+        return (o[query.sortField] || '').toLowerCase();
+    }
+
     query = query || {};
     const result = { items: [] };
 
-    const find = query.find;
-    const sort = query.sort;
-    const page = query.page;
-
     var partial = source;
-    if (find) {
-        var t = find.text || '';
-        if (t.length) {
-            var re = new RegExp(t, find.opts || 'ig');
-            partial = partial.filter(o => options.finder(o, re));
-            result.find = find;
-        }
+    var fx = query.findExpr || '';
+    if (fx.length) {
+        var fo = query.findOpts || 'ig';
+        var re = new RegExp(fx, fo);
+        partial = partial.filter(o => options.finder(o, re));
+        result.findExpr = fx;
+        result.findOpts = fo;
     }
 
-    if (sort && sort.field) {
-        partial = _.orderBy(partial, [sort.field], [sort.dir]);
-        result.sort = sort;
+    if (query.sortField && query.sortDir) {
+        partial = _.orderBy(partial, [fsort], [query.sortDir]);
+        result.sortField = query.sortField;
+        result.sortDir = query.sortDir;
     }
 
     result.count = partial.length;
-    if (page && +page.size > 1) {
+    if (query.pageSize != null && +query.pageSize > 1) {
+        var index = query.pageIndex != null ? +query.pageIndex : 0;
         if (query.selected) {
             for (var i = 0; i < partial.length; i++) {
                 if (options.selector(query.selected)(partial[i])) {
-                    page.index = Math.floor(i / page.size);
+                    index = Math.floor(i / query.pageSize);
                     break;
                 }
             }
         }
 
-        var maxPages = Math.max(1, Math.ceil(partial.length / page.size));
-        var index = Math.max(0, Math.min(+page.index, maxPages - 1));
-        result.page = { index: index, count: maxPages };
-        for (var i = index * page.size, n = 0; i < partial.length && n < +page.size; i++ , n++) {
+        var maxPages = Math.max(1, Math.ceil(partial.length / query.pageSize));
+        index = Math.max(0, Math.min(index, maxPages - 1));
+        result.pageIndex = index;
+        result.pageCount = maxPages;
+        for (var i = index * query.pageSize, n = 0; i < partial.length && n < +query.pageSize; i++ , n++) {
             result.items.push(partial[i]);
         }
     }

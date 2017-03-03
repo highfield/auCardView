@@ -132,7 +132,7 @@ if (typeof Object.create !== 'function') {
 
         me._buildParams = function (params) {
             if (vis && tfind && tfind.length) {
-                params.find = { text: tfind };
+                params.findExpr = tfind;
             }
         }
 
@@ -254,14 +254,15 @@ if (typeof Object.create !== 'function') {
 
         me._buildParams = function (params) {
             if (reqSetting) {
-                params.sort = reqSetting;
+                params.sortField = reqSetting.field;
+                params.sortDir = reqSetting.dir;
             }
         }
 
         me._update = function (info) {
-            if (!info.sort) return;
-            activeField = info.sort.field;
-            activeDir = info.sort.dir === 'desc' ? 'desc' : 'asc';
+            if (!info.sortField || !info.sortDir) return;
+            activeField = info.sortField;
+            activeDir = info.sortDir === 'desc' ? 'desc' : 'asc';
             update();
         }
 
@@ -389,17 +390,15 @@ if (typeof Object.create !== 'function') {
         me._buildParams = function (params, clear) {
             if (vis) {
                 if (clear || !reliable) reqix = 0;
-                params.page = {
-                    index: reqix,
-                    size: owner.options.pageSize
-                }
+                params.pageIndex = reqix;
+                params.pageSize = owner.options.pageSize;
             }
         }
 
         me._update = function (info) {
-            if (!vis || !info || !info.page) return;
-            index = +info.page.index;
-            count = Math.max(+info.page.count, 1);
+            if (!vis || !info) return;
+            index = +info.pageIndex;
+            count = Math.max(+info.pageCount, 1);
             total = +info.count;
             reliable = true;
             update();
@@ -633,7 +632,7 @@ if (typeof Object.create !== 'function') {
 
         var me = {}, uid = uidgen(), xheader, header, body;
         var panel, ptitle, pbody, pselect, pxhdr, phdr;
-        var selected = false, selectable = false, collapsed = false, collapsible = false, cached = {};
+        var selected = false, selectable = true, collapsed = false, collapsible = false, cached = {};
         var deferrer = Deferrer(update, 10);
 
         me.getData = function () { return data; }
@@ -754,7 +753,7 @@ if (typeof Object.create !== 'function') {
             ctlPage._buildParams(params, dirty);
             dirty = false;
 
-            var action = args.action || 'load';
+            var action = args.action || 'get';
             $.when(me.options.controller[action](params, args.data))
                 .then(function (data) {
                     //alert(data.count);

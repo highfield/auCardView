@@ -5,7 +5,7 @@ $(function () {
     var controller = (function () {
         var me = {};
 
-        me.load = function (params) {
+        me.get = function (params) {
             var d = $.Deferred();
 
             $.getJSON("citta", params)
