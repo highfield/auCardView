@@ -545,7 +545,7 @@ if (typeof Object.create !== 'function') {
             var exp = $('<div>').attr('id', 'collapse_' + uid).appendTo(panel);
             pbody = $('<div>').addClass('panel-body auCardView-card-body').appendTo(exp);
 
-            setPanelClass('panel-default');
+            setPanelClass(owner.options.panelClass || 'panel-default');
         }
 
         function setPanelClass(cls) {
@@ -632,7 +632,10 @@ if (typeof Object.create !== 'function') {
 
         var me = {}, uid = uidgen(), xheader, header, body;
         var panel, ptitle, pbody, pselect, pxhdr, phdr;
-        var selected = false, selectable = true, collapsed = false, collapsible = false, cached = {};
+        var selected = false, cached = {};
+        var selectable = owner.options.selectable != null ? !!owner.options.selectable : true;
+        var collapsible = owner.options.collapsible != null ? !!owner.options.collapsible : false;
+        var collapsed = owner.options.collapsed != null ? !!owner.options.collapsed : false;
         var deferrer = Deferrer(update, 10);
 
         me.getData = function () { return data; }
