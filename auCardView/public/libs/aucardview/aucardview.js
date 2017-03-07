@@ -535,12 +535,28 @@ if (typeof Object.create !== 'function') {
 
     function panelItemController(owner, row, data) {
         function build() {
+            var css_pselect = {
+                'position': 'absolute',
+                'right': 15
+            };
+            _.merge(css_pselect, owner.options.panelSelectCSS || {});
+
+            var css_pxhdr = {
+                'display': 'inline-block'
+            };
+            _.merge(css_pxhdr, owner.options.panelXHeaderCSS || {});
+
+            var css_phdr = {
+                'display': 'inline-block'
+            };
+            _.merge(css_phdr, owner.options.panelHeaderCSS || {});
+
             panel = $('<panel>').addClass('panel auCardView-card-panel').appendTo(row);
             var hdr = $('<div>').addClass('panel-heading').appendTo(panel);
             ptitle = $('<h4>').addClass('panel-title').appendTo(hdr);
-            pselect = $('<div>').css('display', 'inline-block').appendTo(ptitle);
-            pxhdr = $('<div>').css('display', 'inline-block').appendTo(ptitle);
-            phdr = $('<div>').appendTo(ptitle);
+            pselect = $('<div>').css(css_pselect).appendTo(ptitle);
+            pxhdr = $('<div>').css(css_pxhdr).appendTo(ptitle);
+            phdr = $('<div>').css(css_phdr).appendTo(ptitle);
 
             var exp = $('<div>').attr('id', 'collapse_' + uid).appendTo(panel);
             pbody = $('<div>').addClass('panel-body auCardView-card-body').appendTo(exp);
@@ -568,7 +584,10 @@ if (typeof Object.create !== 'function') {
             if (canSelect !== cached.canSelect) {
                 pselect.empty();
                 if (canSelect) {
-                    $('<input>').attr({ type: 'checkbox' }).css({ 'margin-right': 20 }).appendTo(pselect).on('change', function () {
+                    var inp = $('<input>').attr({ type: 'checkbox' }).css({
+                        //'margin-right': 20
+                    }).appendTo(pselect);
+                    inp.on('change', function () {
                         me.setSelected($(this).prop('checked'));
                     });
                 }
@@ -720,6 +739,7 @@ if (typeof Object.create !== 'function') {
         function viewBuilder(items) {
             var children = mrow.children();
             panels.length = 0;
+            var proj = me.options.projection || function (x) { return x; }
             try {
                 var i = 0;
                 for (; i < items.length; i++) {
@@ -731,9 +751,11 @@ if (typeof Object.create !== 'function') {
                         ctr = $(children[i]);
                         ctr.empty();
                     }
-                    var p = panelItemController(me, ctr, items[i]);
+
+                    var dataItem = proj(items[i]);
+                    var p = panelItemController(me, ctr, dataItem);
                     panels.push(p);
-                    me.options.panelViewUpdater && me.options.panelViewUpdater(p, items[i]);
+                    me.options.panelViewUpdater && me.options.panelViewUpdater(p, dataItem);
                 }
                 while (i < children.length) {
                     children[i++].remove();

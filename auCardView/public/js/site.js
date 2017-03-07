@@ -56,6 +56,9 @@ $(function () {
             options: [
                 { field: 'nome', label: 'Nome' }
             ]
+        },
+        panelXHeaderCSS: {
+            'margin-left': 20
         }
     };
     $('#cv1').auCardView(options1);
