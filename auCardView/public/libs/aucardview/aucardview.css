@@ -38,6 +38,9 @@
 
 .auCardView-card {
     margin: 5px 0px;
+    border-width: 2px;
+    border-style: solid;
+    border-color: transparent;
 }
 
 .auCardView-card-panel {

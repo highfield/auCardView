@@ -501,6 +501,12 @@ if (typeof Object.create !== 'function') {
             }
         }
 
+        me.clear = function () {
+            panels.forEach(function (p) {
+                p.setSelected(false);
+            });
+        }
+
         me._selChanged = function (psrc) {
             if (mode === 'single') {
                 if (psrc.getSelected()) {
@@ -537,7 +543,12 @@ if (typeof Object.create !== 'function') {
         function build() {
             var css_pselect = {
                 'position': 'absolute',
-                'right': 15
+                //'right': 15
+                'right': 2,
+                'width': 40,
+                'height': 36,
+                'margin-top': -10,
+                'background-color': 'transparent'
             };
             _.merge(css_pselect, owner.options.panelSelectCSS || {});
 
@@ -562,6 +573,19 @@ if (typeof Object.create !== 'function') {
             pbody = $('<div>').addClass('panel-body auCardView-card-body').appendTo(exp);
 
             setPanelClass(owner.options.panelClass || 'panel-default');
+
+            pselect.on('click', function (e) {
+                e.stopPropagation();
+                me.setSelected(!me.getSelected());
+                updateCheckbox();
+            });
+
+            panel.on('click', function () {
+                if (selectable && globalSelectable()) {
+                    owner.getSelectionController().clear();
+                    me.setSelected(true);
+                }
+            });
         }
 
         function setPanelClass(cls) {
@@ -579,24 +603,45 @@ if (typeof Object.create !== 'function') {
             }
         }
 
+        function updateCheckbox() {
+            var sp = pselect.find('span');
+            sp.attr('class', me.getSelected() ? 'glyphicon glyphicon-check' : 'glyphicon glyphicon-unchecked');
+            sp.css('opacity', me.getSelected() ? 1.0 : 0.25);
+
+            if (owner.options.selectionBorderColor) {
+                panel.parent().css('border-color', me.getSelected() ? owner.options.selectionBorderColor : 'transparent');
+            }
+        }
+
         function update() {
             var canSelect = selectable && globalSelectable();
             if (canSelect !== cached.canSelect) {
                 pselect.empty();
                 if (canSelect) {
-                    var inp = $('<input>').attr({ type: 'checkbox' }).css({
-                        //'margin-right': 20
+                    $('<span>').attr('aria-hidden', true).css({
+                        'position': 'absolute',
+                        'left': 10,
+                        'top': 10,
+                        'font-size': '1.2em',
+                        //'opacity': 0.65
                     }).appendTo(pselect);
-                    inp.on('change', function () {
-                        me.setSelected($(this).prop('checked'));
-                    });
+                    //var inp = $('<input>').attr({ type: 'checkbox' }).css({
+                    //    //'margin-right': 20
+                    //    'position': 'absolute',
+                    //    'left': 10,
+                    //    'top': 10
+                    //}).appendTo(pselect);
+                    //inp.on('change', function () {
+                    //    me.setSelected($(this).prop('checked'));
+                    //});
                 }
                 cached.canSelect = canSelect;
             }
 
             if (selected !== cached.selected) {
-                var inp = pselect.children('input');
-                if (inp.length) inp.prop('checked', selected);
+                //var inp = pselect.children('input');
+                //if (inp.length) inp.prop('checked', selected);
+                updateCheckbox();
                 owner.getSelectionController()._selChanged(me);
                 cached.selected = selected;
             }

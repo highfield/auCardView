@@ -59,7 +59,8 @@ $(function () {
         },
         panelXHeaderCSS: {
             'margin-left': 20
-        }
+        },
+        selectionBorderColor: 'blue'
     };
     $('#cv1').auCardView(options1);
     var cv1 = $('#cv1').data('auCardView');
