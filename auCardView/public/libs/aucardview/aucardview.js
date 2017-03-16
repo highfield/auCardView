@@ -20,14 +20,6 @@
  */
 
 
-//if (typeof Object.create !== 'function') {
-//    Object.create = function (obj) {
-//        function F() { }
-//        F.prototype = obj;
-//        return new F();
-//    };
-//}
-
 (function ($) {
     "use strict";
 
@@ -37,17 +29,6 @@
             obj.init(options, this);
             $(this).data('auCardView', obj);
         });
-        //if ($.isPlainObject(options)) {
-        //    return this.each(function () {
-        //        var obj = Object.create(AuCardView());
-        //        obj.init(options, this);
-        //        $(this).data('auCardView', obj);
-        //    });
-        //} else if (typeof options === 'string' && options.indexOf('_') !== 0) {
-        //    var obj = $(this).data('auCardView');
-        //    var method = obj[options];
-        //    return method.apply(obj, $.makeArray(arguments).slice(1));
-        //}
     };
 
     $.fn.auCardView.options = {
@@ -56,7 +37,13 @@
         showPage: false,
         selectionManager: 'none',
         pageSize: 15,
-        sort: null
+        sort: null,
+        controller: null,
+        panelViewUpdater: null,
+        panelClickEnabled: true,
+        selectionBorderColor: 'transparent',
+        panelHeaderCSS: null,
+        panelXHeaderCSS: null
     };
 
 
@@ -448,22 +435,12 @@
         function select() {
             var v = reqaction === 'all';
             manager.command(reqaction);
-            //proxies.forEach(function (p) {
-            //    p.setSelected(v);
-            //});
             reqaction = v ? 'none' : 'all';
             update();
         }
 
         function considerRaiseEvent() {
             deferrer.release();
-            //var selected = [], chg = false;
-            //proxies.forEach(function (p) {
-            //    if (p.hasChanged()) chg = true;
-            //    if (p.getSelected()) {
-
-            //    }
-            //});
             if (manager && manager.hasChanged()) {
                 var event = $.Event("selection");
                 event.selected = manager.getSelected();
@@ -501,54 +478,8 @@
             owner.refresh();
         }
 
-        //me.getMode = function () { return mode; }
-        //me.setMode = function (v) {
-        //    if (mode !== v) {
-        //        switch (v) {
-        //            case 'single':
-        //            case 'multi':
-        //                mode = v;
-        //                break;
-
-        //            default:
-        //                mode = 'none';
-        //                break;
-        //        }
-        //        cctr.empty();
-        //        btn = null;
-        //        if (mode === 'multi') {
-        //            cctr.css('display', '');
-        //            build();
-        //            update();
-        //        }
-        //        else {
-        //            cctr.css('display', 'none');
-        //        }
-        //        owner.refresh();
-        //    }
-        //}
-
-        //me.clear = function () {
-        //    proxies.forEach(function (p) {
-        //        p.setSelected(false);
-        //    });
-        //}
-
-        //me._selChanged = function (psrc) {
-        //    if (mode === 'single') {
-        //        if (psrc.getSelected()) {
-        //            panels.forEach(function (p) {
-        //                if (p !== psrc) p.setSelected(false);
-        //            });
-        //        }
-        //    }
-        //    deferrer.release();
-        //    deferrer.trigger();
-        //}
-
         me._measure = function () {
             return (manager && manager.maxCount() > 1) ? cctr.width() : 0;
-            //return (mode === 'multi') ? cctr.width() : 0;
         }
 
         me._arrange = function (l, r) {
@@ -602,30 +533,12 @@
 
             setPanelClass(owner.options.panelClass || 'panel-default');
 
-            pselect.on('click', function (e, chg) {
-                e.stopPropagation();
-                var mgr = owner.getSelectionController().getManager();
-                var ck = pselect.data('auCheckBox');
-                if (mgr && ck && selector) {
-                    switch (ck.getStatus()) {
-                        case 'checked': mgr.command('select', selector); break;
-                        case 'unchecked': mgr.command('unselect', selector); break;
-                        case 'indeterminate': mgr.command('indeterminate', selector); break;
-                    }
-                }
-                //me.setSelected(ck.getStatus() === 'checked');
-                //me.setSelected(!me.getSelected());
-                //updateCheckbox();
-            });
-
-            panel.on('click', function (e) {
-                var mgr = owner.getSelectionController().getManager();
-                mgr && mgr.command('panel', selector);
-                //if (selectable && globalSelectable()) {
-                //    owner.getSelectionController().clear();
-                //    me.setSelected(true);
-                //}
-            });
+            if (owner.options.panelClickEnabled) {
+                panel.on('click', function (e) {
+                    var mgr = owner.getSelectionController().getManager();
+                    mgr && mgr.command('panel', selector);
+                });
+            }
         }
 
         function setPanelClass(cls) {
@@ -643,21 +556,9 @@
             }
         }
 
-        //function updateCheckbox() {
-        //    var ck = pselect.data('auCheckBox');
-        //    if (ck) ck.setStatus(me.getSelected() ? 'checked' : 'unchecked');
-        //    //var sp = pselect.find('span');
-        //    //sp.attr('class', me.getSelected() ? 'glyphicon glyphicon-check' : 'glyphicon glyphicon-unchecked');
-        //    //sp.css('opacity', me.getSelected() ? 1.0 : 0.25);
-
-        //    if (owner.options.selectionBorderColor) {
-        //        panel.parent().css('border-color', me.getSelected() ? owner.options.selectionBorderColor : 'transparent');
-        //    }
-        //}
-
         function update() {
-            //var canSelect = selectable && globalSelectable();
-            var canSelect = selector && globalSelectable();
+            var mgr = owner.getSelectionController().getManager();
+            var canSelect = selector && mgr && mgr.maxCount() > 0;
             if (canSelect !== cached.canSelect) {
                 pselect.empty();
                 if (canSelect) {
@@ -668,40 +569,10 @@
                         'top': 10,
                         'font-size': '1.2em',
                     });
-                    //$('<span>').attr('aria-hidden', true).css({
-                    //    'position': 'absolute',
-                    //    'left': 10,
-                    //    'top': 10,
-                    //    'font-size': '1.2em',
-                    //    //'opacity': 0.65
-                    //}).appendTo(pselect);
+                    mgr.bindCheckBox(pselect, selector);
                 }
                 cached.canSelect = canSelect;
             }
-
-            if (selector /*&& selector.getSelected() !== cached.selected*/) {
-                var ck = pselect.data('auCheckBox');
-                if (ck) {
-                    if (selector.getIndeterminate()) {
-                        ck.setStatus('indeterminate');
-                    }
-                    else {
-                        ck.setStatus(selector.getSelected() ? 'checked' : 'unchecked');
-                    }
-                }
-                cached.selected = selector.getSelected();
-
-                if (owner.options.selectionBorderColor) {
-                    panel.parent().css('border-color', selector.getSelected() ? owner.options.selectionBorderColor : 'transparent');
-                }
-            }
-            //if (selected !== cached.selected) {
-            //    //var inp = pselect.children('input');
-            //    //if (inp.length) inp.prop('checked', selected);
-            //    updateCheckbox();
-            //    owner.getSelectionController()._selChanged(me);
-            //    cached.selected = selected;
-            //}
 
             if (collapsible !== cached.collapsible) {
                 pxhdr.empty();
@@ -747,16 +618,14 @@
             deferrer.release();
         }
 
-        function globalSelectable() {
-            var mgr = owner.getSelectionController().getManager();
-            return mgr && mgr.maxCount() > 0;
-            //return owner.getSelectionController().getMode() !== 'none';
+        function updatePanelSelection() {
+            if (selector && owner.options.selectionBorderColor) {
+                panel.parent().css('border-color', selector.getSelected() ? owner.options.selectionBorderColor : 'transparent');
+            }
         }
 
         var me = {}, uid = uidgen(), cached = {}, xheader, header, body, selector;
         var panel, ptitle, pbody, pselect, pxhdr, phdr;
-        //var selected = false;
-        //var selectable = owner.options.selectable != null ? !!owner.options.selectable : true;
         var collapsible = owner.options.collapsible != null ? !!owner.options.collapsible : false;
         var collapsed = owner.options.collapsed != null ? !!owner.options.collapsed : false;
         var deferrer = Deferrer(update, 10);
@@ -785,25 +654,10 @@
         me.setSelector = function (v) {
             selector = v;
             if (selector) {
-                selector.change = function () {
-                    deferrer.trigger();
-                }
+                selector.change = updatePanelSelection;
             }
             deferrer.trigger();
         }
-
-        //me.getSelected = function () { return selected; }
-        //me.setSelected = function (v) {
-        //    selected = !!v && selectable && globalSelectable();
-        //    deferrer.trigger();
-        //}
-
-        //me.getSelectable = function () { return selectable; }
-        //me.setSelectable = function (v) {
-        //    selectable = !!v && globalSelectable();
-        //    selected = selected && selectable;
-        //    deferrer.trigger();
-        //}
 
         me.getCollapsed = function () { return collapsed; }
         me.setCollapsed = function (v) {
@@ -914,6 +768,10 @@
                     }
                     finally {
                         deferrer.release();
+                        if (!run1) {
+                            run1 = true;
+                            me.$elem.trigger('init');
+                        }
                     }
                 },
                 function (err) {
@@ -960,17 +818,13 @@
 
         $(window).on('resize', resize);
 
-        var me = {}, ctlSearch, ctlSort, ctlPage, ctlSelect, hrow, mrow, frow, dirty = true, panels = [], spinLayer;
+        var me = {}, ctlSearch, ctlSort, ctlPage, ctlSelect, hrow, mrow, frow, dirty = true, run1, panels = [], spinLayer;
         var deferrer = Deferrer(updater, 200);
 
         me.getSearchController = function () { return ctlSearch; }
         me.getSortController = function () { return ctlSort; }
         me.getPageController = function () { return ctlPage; }
         me.getSelectionController = function () { return ctlSelect; }
-
-        //me.getStandardSelectorManager = function (name) {
-        //    return StandardSelectionManager[name];
-        //}
 
         me.init = function (options, elem) {
             me.$elem = $(elem);
@@ -1022,12 +876,12 @@ var AuCardViewSelectionManager = (function () {
         function SelProxy(data) {
             var sp = {}, sel = false, old = false;
             sp.getData = function () { return data; }
-            sp.getIndeterminate = function () { return sel == null;}
+            sp.getIndeterminate = function () { return sel == null; }
             sp.getSelected = function () { return sel; }
             sp.setSelected = function (v) {
-                //v = !!v;
                 if (sel !== v) {
                     sel = v;
+                    sp._change && sp._change(sel);
                     sp.change && sp.change(sel);
                     me.notify && me.notify();
                 }
@@ -1039,7 +893,7 @@ var AuCardViewSelectionManager = (function () {
                 return f;
             }
 
-            sp.change = null;
+            sp._change = sp.change = null;
             sp.dispose = function () { }
             return sp;
         }
@@ -1064,8 +918,20 @@ var AuCardViewSelectionManager = (function () {
             return sa;
         }
 
+        me.setSelected = function (sel) {
+            if (_.isFunction(sel)) {
+                proxies.forEach(function (p) {
+                    p.setSelected(sel(p));
+                });
+            }
+            else if (_.isArray(sel)) {
+                proxies.forEach(function (p) {
+                    p.setSelected(sel.indexOf(p.getData()) >= 0);
+                });
+            }
+        }
+
         me.createProxy = function (data) {
-            //if (proxies.length >= Nmax) return;
             var sp = SelProxy(data);
             proxies.push(sp);
             return sp;
@@ -1074,12 +940,32 @@ var AuCardViewSelectionManager = (function () {
         me.getProxies = function () {
             return proxies.slice(0);
         }
-        //me.getProxy = function (data) {
-        //    for (var i = 0; i < proxies.length; i++) {
-        //        var p = proxies[i];
-        //        if (p.getData() === data) return p;
-        //    }
-        //}
+
+        me.bindCheckBox = function (ckel, proxy) {
+            proxy._change = function () {
+                var ck = ckel.data('auCheckBox');
+                if (ck) {
+                    if (proxy.getIndeterminate()) {
+                        ck.setStatus('indeterminate');
+                    }
+                    else {
+                        ck.setStatus(proxy.getSelected() ? 'checked' : 'unchecked');
+                    }
+                }
+            }
+            proxy._change();
+
+            ckel.on('click', function (e) {
+                e.stopPropagation();
+                var ck = $(this).data('auCheckBox');
+                switch (ck.getStatus()) {
+                    case 'checked': me.command('select', proxy); break;
+                    case 'unchecked': me.command('unselect', proxy); break;
+                    case 'indeterminate': me.command('indeterminate', proxy); break;
+                }
+            });
+        }
+
 
         me.command = function (cmd, proxy) {
             console.log(cmd);
@@ -1135,6 +1021,43 @@ var AuCardViewSelectionManager = (function () {
                 case 'unselect':
                     proxy && proxy.setSelected(false);
                     break;
+            }
+        }
+        return me;
+    }
+
+
+    managers.multimd = function () {
+        var me = managers.base(1e6);
+        me.xcommand = function (cmd, proxy) {
+            if (!proxy) return;
+            if (cmd !== 'select' && cmd !== 'unselect') return;
+            var f = cmd === 'select';
+            proxy.setSelected(f);
+
+            if (proxy.parent) {
+                var nc = 0, ns = 0;
+                me.getProxies().forEach(function (p) {
+                    if (p.parent === proxy.parent) {
+                        nc++;
+                        if (p.getSelected()) ns++;
+                    }
+                });
+
+                if (ns === 0) {
+                    proxy.parent.setSelected(false);
+                }
+                else if (ns === nc) {
+                    proxy.parent.setSelected(true);
+                }
+                else {
+                    proxy.parent.setSelected(null);
+                }
+            }
+            else {
+                me.getProxies().forEach(function (p) {
+                    if (p.parent === proxy) p.setSelected(f);
+                });
             }
         }
         return me;

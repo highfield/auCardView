@@ -22,31 +22,10 @@ var MasterDetailDemo = (function ($) {
     })();
 
 
-    function binder(manager, ckel, proxy) {
-        function update() {
-            var ck = ckel.data('auCheckBox');
-            ck.setStatus(proxy.getSelected() ? 'checked' : 'unchecked');
-        }
-
-        ckel.on('click', function (e) {
-            e.stopPropagation();
-            var ck = $(this).data('auCheckBox');
-            switch (ck.getStatus()) {
-                case 'checked': manager.command('select', proxy); break;
-                case 'unchecked': manager.command('unselect', proxy); break;
-            }
-        });
-
-        proxy.change = update;
-        update();
-    }
-
-
     function panelViewUpdater(owner, panel, data) {
         var selmgr = owner.getSelectionController().getManager();
 
         var xhdr = $('<div>');
-        //$('<i>').addClass('fa fa-bath').attr('aria-hidden', true).appendTo(xhdr);
         $('<span>').text(data.nome).appendTo(xhdr);
         panel.setXHeader(xhdr);
 
@@ -72,60 +51,10 @@ var MasterDetailDemo = (function ($) {
 
             var sp = selmgr.createProxy(c);
             sp.parent = panel.getSelector();
-            binder(selmgr, $ck, sp);
-
-            //$ck.on('click', function (e) {
-            //    e.stopPropagation();
-            //    var ck = $(this).data('auCheckBox');
-            //    switch (ck.getStatus()) {
-            //        case 'checked': selmgr.command('select', sp); break;
-            //        case 'unchecked': selmgr.command('unselect', sp); break;
-            //    }
-            //});
-
-            //var ck = $ck.data('auCheckBox');
-            //ck.setStatus(sp.getSelected() ? 'checked' : 'unchecked');
-
+            selmgr.bindCheckBox($ck, sp);
         });
 
         panel.setBody(body);
-    }
-
-
-    function mdSelectionManager() {
-        var me = AuCardViewSelectionManager.base(1e6);
-        me.xcommand = function (cmd, proxy) {
-            if (!proxy) return;
-            if (cmd !== 'select' && cmd !== 'unselect') return;
-            var f = cmd === 'select';
-            proxy.setSelected(f);
-
-            if (proxy.parent) {
-                var nc = 0, ns = 0;
-                me.getProxies().forEach(function (p) {
-                    if (p.parent === proxy.parent) {
-                        nc++;
-                        if (p.getSelected()) ns++;
-                    }
-                });
-
-                if (ns === 0) {
-                    proxy.parent.setSelected(false);
-                }
-                else if (ns === nc) {
-                    proxy.parent.setSelected(true);
-                }
-                else {
-                    proxy.parent.setSelected(null);
-                }
-            }
-            else {
-                me.getProxies().forEach(function (p) {
-                    if (p.parent === proxy) p.setSelected(f);
-                });
-            }
-        }
-        return me;
     }
 
 
@@ -137,7 +66,7 @@ var MasterDetailDemo = (function ($) {
             showSearch: true,
             showSort: true,
             //showPage: true,
-            selectionManager: mdSelectionManager(),
+            selectionManager: 'multimd',
             controller: controller,
             panelViewUpdater: panelViewUpdater,
             sort: {
@@ -170,6 +99,33 @@ var MasterDetailDemo = (function ($) {
             }
             if (log.length > 40) log.splice(0, log.length - 40);
             $('#mdlog').val(log.join('\n'));
+        });
+
+        //selection test
+        $('#cv3').on('init', function (e) {
+            var reg1 = "Lombardia", reg2 = "Lazio";
+            var selmgr = cv3.getSelectionController().getManager();
+            selmgr.setSelected(function (p) {
+                if (p.parent) {
+                    return p.getData().nome[0] === 'P' || p.parent.getData().nome === reg1 || p.parent.getData().nome === reg2;
+                }
+                else {
+                    return p.getData().nome === reg1 || p.getData().nome === reg2;
+                }
+            });
+        });
+
+        $('#bmdsel1').on('click', function () {
+            var reg = "Veneto";
+            var selmgr = cv3.getSelectionController().getManager();
+            selmgr.setSelected(function (p) {
+                if (p.parent) {
+                    return p.getData().nome[0] === 'A' || p.parent.getData().nome === reg;
+                }
+                else {
+                    return p.getData().nome === reg;
+                }
+            });
         });
     }
 
