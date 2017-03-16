@@ -22,7 +22,7 @@ $(function () {
     })();
 
 
-    function panelViewUpdater(panel, data) {
+    function panelViewUpdater(owner, panel, data) {
         var xhdr = $('<div>');
         $('<i>').addClass('fa fa-bath').attr('aria-hidden', true).appendTo(xhdr);
         $('<span>').text(data.nome + ' (' + data.sigla_automobilistica + ')').appendTo(xhdr);
@@ -48,7 +48,7 @@ $(function () {
         //showSearch: true,
         //showSort: true,
         //showPage: true,
-        //selectMode: 'multi',
+        //selectionManager: 'multi',
         controller: controller,
         panelViewUpdater: panelViewUpdater,
         sort: {
@@ -68,13 +68,15 @@ $(function () {
     $('#cv2').auCardView(options1);
     var cv2 = $('#cv2').data('auCardView');
 
+    MasterDetailDemo();
+
 
     $('#btn_modal').on('click', function () {
         var opts = {
             showSearch: true,
             showSort: true,
             showPage: true,
-            selectMode: 'multi',
+            selectionManager: 'multi',
             controller: controller,
             panelViewUpdater: panelViewUpdater,
             sort: {
@@ -163,8 +165,8 @@ $(function () {
 
     $('#selmode1,#selmode2,#selmode3').on('change', function () {
         var v = $('input[name=inlineRadioOptions]:checked').val();
-        cv1.getSelectionController().setMode(v);
-        cv2.getSelectionController().setMode(v);
+        cv1.getSelectionController().setManager(v);
+        cv2.getSelectionController().setManager(v);
     });
 
 
@@ -209,7 +211,7 @@ $(function () {
                 log.push('selected=(none)');
                 break;
             case 1:
-                log.push('selected=' + e.selected[0].getData().nome);
+                log.push('selected=' + e.selected[0].nome);
                 break;
             default:
                 log.push('selected=(' + e.selected.length + ' items)');

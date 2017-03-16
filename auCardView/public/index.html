@@ -33,6 +33,7 @@
                 <ul class="nav navbar-nav">
                     <li><a href="#sect_constrained">Constrained</a></li>
                     <li><a href="#sect_free">Free layout</a></li>
+                    <li><a href="#sect_msdl">Master/detail</a></li>
                     <li><a href="#" id="btn_modal">Modal dialog</a></li>
                 </ul>
             </div>
@@ -138,6 +139,19 @@
             </div>
         </section>
 
+
+        <section id="sect_msdl">
+            <h1>Master/detail sample</h1>
+            <div style="width: 100%; height:640px" class="row">
+                <div id="cv3" style="height:100%" class="col-md-6">
+
+                </div>
+                <div style="height:100%; background-color: cornsilk" class="col-md-6">
+                    <textarea rows="40" cols="40" id="mdlog" readonly></textarea>
+                </div>
+            </div>
+        </section>
+
     </div>
 
     <script src="/libs/jquery-3.1.1.min.js"></script>
@@ -145,7 +159,9 @@
     <script src="/libs/bootstrap3-dialog/dist/js/bootstrap-dialog.min.js"></script>
     <script src="/libs/lodash.min.js"></script>
 
+    <script src="/libs/aucheckbox.js"></script>
     <script src="/libs/aucardview/aucardview.js"></script>
     <script src="/js/site.js"></script>
+    <script src="/js/master-detail-demo.js"></script>
 </body>
 </html>

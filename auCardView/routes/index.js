@@ -1048,41 +1048,29 @@ router.get('/', function (req, res) {
 
 
 router.get('/regioni', function (req, res) {
-    var result = {
-        items: []
-    };
-    if (req.query) {
-        if (req.query.q) {
-            var q = req.query.q;
-            for (var i = 0; i < regioni.length; i++) {
-                var c = regioni[i];
-                if (c.nome.indexOf(q) >= 0) {
-                    result.items.push({
-                        id: c.id,
-                        text: c.nome
-                    });
-                }
-            }
-        }
-        else if (req.query.id) {
-            var q = req.query.id;
-            for (var i = 0; i < regioni.length; i++) {
-                var c = regioni[i];
-                if (c.id == q) {
-                    result.items.push({
-                        id: c.id,
-                        text: c.nome
-                    });
-                }
-            }
-        }
+    var subset = regioni.map(r => {
+        var rr = { id: r.id, nome: r.nome };
+        var cc = citta.filter(c => c.id_regione === r.id).map(c => ({ id: c.id, nome: c.nome, sigla: c.sigla_automobilistica }));
+        rr.citta = _.orderBy(cc, ['nome']);
+        return rr;
+    });
+
+    var options = {};
+    options.finder = function (item, re) {
+        if (re.test(item.nome)) return true;
     }
+
+    options.selector = function (id) {
+        return o => o.id === id;
+    }
+
+    var result = pager(subset, req.query, options);
+
     res.json(result);
 });
 
 
 router.get('/citta', function (req, res) {
-
     var subset = citta.map(c => {
         var cc = _.clone(c);
         for (var i = 0; i < regioni.length; i++) {

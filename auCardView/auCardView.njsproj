@@ -32,8 +32,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="app.js" />
+    <Compile Include="public\js\master-detail-demo.js" />
     <Compile Include="public\js\site.js" />
     <Compile Include="public\libs\aucardview\aucardview.js" />
+    <Compile Include="public\libs\aucheckbox.js" />
     <Compile Include="public\libs\bootstrap-3.3.7-dist\js\bootstrap.js" />
     <Compile Include="public\libs\bootstrap-3.3.7-dist\js\bootstrap.min.js" />
     <Compile Include="public\libs\bootstrap-3.3.7-dist\js\npm.js" />

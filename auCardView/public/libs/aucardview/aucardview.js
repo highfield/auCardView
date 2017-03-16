@@ -20,36 +20,41 @@
  */
 
 
-if (typeof Object.create !== 'function') {
-    Object.create = function (obj) {
-        function F() { }
-        F.prototype = obj;
-        return new F();
-    };
-}
+//if (typeof Object.create !== 'function') {
+//    Object.create = function (obj) {
+//        function F() { }
+//        F.prototype = obj;
+//        return new F();
+//    };
+//}
 
 (function ($) {
     "use strict";
 
     $.fn.auCardView = function (options) {
-        if ($.isPlainObject(options)) {
-            return this.each(function () {
-                var obj = Object.create(AuCardView());
-                obj.init(options, this);
-                $(this).data('auCardView', obj);
-            });
-        } else if (typeof options === 'string' && options.indexOf('_') !== 0) {
-            var obj = $(this).data('auCardView');
-            var method = obj[options];
-            return method.apply(obj, $.makeArray(arguments).slice(1));
-        }
+        return this.each(function () {
+            var obj = AuCardView();
+            obj.init(options, this);
+            $(this).data('auCardView', obj);
+        });
+        //if ($.isPlainObject(options)) {
+        //    return this.each(function () {
+        //        var obj = Object.create(AuCardView());
+        //        obj.init(options, this);
+        //        $(this).data('auCardView', obj);
+        //    });
+        //} else if (typeof options === 'string' && options.indexOf('_') !== 0) {
+        //    var obj = $(this).data('auCardView');
+        //    var method = obj[options];
+        //    return method.apply(obj, $.makeArray(arguments).slice(1));
+        //}
     };
 
     $.fn.auCardView.options = {
         showSearch: false,
         showSort: false,
         showPage: false,
-        selectMode: 'none',
+        selectionManager: 'none',
         pageSize: 15,
         sort: null
     };
@@ -424,7 +429,8 @@ if (typeof Object.create !== 'function') {
     }
 
 
-    function selectionController(owner, row, panels) {
+    function selectionController(owner, row) {
+
         function build() {
             var bcell = $('<div>').addClass('auCardView-toolbar-cell-content').appendTo(cctr);
             btn = $('<button>').addClass('btn btn-default').attr({ 'type': 'button' }).appendTo(bcell);
@@ -441,86 +447,108 @@ if (typeof Object.create !== 'function') {
 
         function select() {
             var v = reqaction === 'all';
-            panels.forEach(function (p) {
-                p.setSelected(v);
-            });
+            manager.command(reqaction);
+            //proxies.forEach(function (p) {
+            //    p.setSelected(v);
+            //});
             reqaction = v ? 'none' : 'all';
             update();
         }
 
         function considerRaiseEvent() {
             deferrer.release();
-            var selected = [], chg = false;
-            for (var i = 0; i < panels.length; i++) {
-                var p = panels[i];
-                if (p.getSelected()) {
-                    selected.push(p);
-                    if (oldsel[i] !== p) chg = true;
-                    oldsel[i] = p;
-                }
-                else {
-                    if (oldsel[i]) chg = true;
-                    oldsel[i] = null;
-                }
-            }
-            if (chg) {
+            //var selected = [], chg = false;
+            //proxies.forEach(function (p) {
+            //    if (p.hasChanged()) chg = true;
+            //    if (p.getSelected()) {
+
+            //    }
+            //});
+            if (manager && manager.hasChanged()) {
                 var event = $.Event("selection");
-                event.selected = selected;
+                event.selected = manager.getSelected();
                 owner.$elem.trigger(event);
             }
         }
 
-        var me = {}, mode = 'none', btn, reqaction = 'all', oldsel = new Array(panels.length);
+        var me = {}, btn, reqaction = 'all', manager;
         var cctr = $('<div>').addClass('auCardView-toolbar-cell').appendTo(row);
         var deferrer = Deferrer(considerRaiseEvent, 100);
 
-        me.getMode = function () { return mode; }
-        me.setMode = function (v) {
-            if (mode !== v) {
-                switch (v) {
-                    case 'single':
-                    case 'multi':
-                        mode = v;
-                        break;
-
-                    default:
-                        mode = 'none';
-                        break;
-                }
-                cctr.empty();
-                btn = null;
-                if (mode === 'multi') {
-                    cctr.css('display', '');
-                    build();
-                    update();
-                }
-                else {
-                    cctr.css('display', 'none');
-                }
-                owner.refresh();
+        me.getManager = function () { return manager; }
+        me.setManager = function (v) {
+            if (manager) manager.notify = null;
+            if (typeof v === 'string') {
+                v = AuCardViewSelectionManager[v]();
             }
-        }
-
-        me.clear = function () {
-            panels.forEach(function (p) {
-                p.setSelected(false);
-            });
-        }
-
-        me._selChanged = function (psrc) {
-            if (mode === 'single') {
-                if (psrc.getSelected()) {
-                    panels.forEach(function (p) {
-                        if (p !== psrc) p.setSelected(false);
-                    });
+            manager = v;
+            cctr.empty();
+            btn = null;
+            if (manager) {
+                manager.notify = function () {
+                    deferrer.release();
+                    deferrer.trigger();
                 }
             }
-            deferrer.release();
-            deferrer.trigger();
+            if (manager && manager.maxCount() > 1) {
+                cctr.css('display', '');
+                build();
+                update();
+            }
+            else {
+                cctr.css('display', 'none');
+            }
+            owner.refresh();
         }
+
+        //me.getMode = function () { return mode; }
+        //me.setMode = function (v) {
+        //    if (mode !== v) {
+        //        switch (v) {
+        //            case 'single':
+        //            case 'multi':
+        //                mode = v;
+        //                break;
+
+        //            default:
+        //                mode = 'none';
+        //                break;
+        //        }
+        //        cctr.empty();
+        //        btn = null;
+        //        if (mode === 'multi') {
+        //            cctr.css('display', '');
+        //            build();
+        //            update();
+        //        }
+        //        else {
+        //            cctr.css('display', 'none');
+        //        }
+        //        owner.refresh();
+        //    }
+        //}
+
+        //me.clear = function () {
+        //    proxies.forEach(function (p) {
+        //        p.setSelected(false);
+        //    });
+        //}
+
+        //me._selChanged = function (psrc) {
+        //    if (mode === 'single') {
+        //        if (psrc.getSelected()) {
+        //            panels.forEach(function (p) {
+        //                if (p !== psrc) p.setSelected(false);
+        //            });
+        //        }
+        //    }
+        //    deferrer.release();
+        //    deferrer.trigger();
+        //}
 
         me._measure = function () {
-            return (mode === 'multi') ? cctr.width() : 0;
+            return (manager && manager.maxCount() > 1) ? cctr.width() : 0;
+            //return (mode === 'multi') ? cctr.width() : 0;
         }
 
         me._arrange = function (l, r) {
@@ -574,17 +602,29 @@ if (typeof Object.create !== 'function') {
 
             setPanelClass(owner.options.panelClass || 'panel-default');
 
-            pselect.on('click', function (e) {
+            pselect.on('click', function (e, chg) {
                 e.stopPropagation();
-                me.setSelected(!me.getSelected());
-                updateCheckbox();
+                var mgr = owner.getSelectionController().getManager();
+                var ck = pselect.data('auCheckBox');
+                if (mgr && ck && selector) {
+                    switch (ck.getStatus()) {
+                        case 'checked': mgr.command('select', selector); break;
+                        case 'unchecked': mgr.command('unselect', selector); break;
+                        case 'indeterminate': mgr.command('indeterminate', selector); break;
+                    }
+                }
+                //me.setSelected(ck.getStatus() === 'checked');
+                //me.setSelected(!me.getSelected());
+                //updateCheckbox();
             });
 
-            panel.on('click', function () {
-                if (selectable && globalSelectable()) {
-                    owner.getSelectionController().clear();
-                    me.setSelected(true);
-                }
+            panel.on('click', function (e) {
+                var mgr = owner.getSelectionController().getManager();
+                mgr && mgr.command('panel', selector);
+                //if (selectable && globalSelectable()) {
+                //    owner.getSelectionController().clear();
+                //    me.setSelected(true);
+                //}
             });
         }
 
@@ -603,48 +643,65 @@ if (typeof Object.create !== 'function') {
             }
         }
 
-        function updateCheckbox() {
-            var sp = pselect.find('span');
-            sp.attr('class', me.getSelected() ? 'glyphicon glyphicon-check' : 'glyphicon glyphicon-unchecked');
-            sp.css('opacity', me.getSelected() ? 1.0 : 0.25);
+        //function updateCheckbox() {
+        //    var ck = pselect.data('auCheckBox');
+        //    if (ck) ck.setStatus(me.getSelected() ? 'checked' : 'unchecked');
+        //    //var sp = pselect.find('span');
+        //    //sp.attr('class', me.getSelected() ? 'glyphicon glyphicon-check' : 'glyphicon glyphicon-unchecked');
+        //    //sp.css('opacity', me.getSelected() ? 1.0 : 0.25);
 
-            if (owner.options.selectionBorderColor) {
-                panel.parent().css('border-color', me.getSelected() ? owner.options.selectionBorderColor : 'transparent');
-            }
-        }
+        //    if (owner.options.selectionBorderColor) {
+        //        panel.parent().css('border-color', me.getSelected() ? owner.options.selectionBorderColor : 'transparent');
+        //    }
+        //}
 
         function update() {
-            var canSelect = selectable && globalSelectable();
+            //var canSelect = selectable && globalSelectable();
+            var canSelect = selector && globalSelectable();
             if (canSelect !== cached.canSelect) {
                 pselect.empty();
                 if (canSelect) {
-                    $('<span>').attr('aria-hidden', true).css({
+                    pselect.auCheckBox();
+                    pselect.find('span').css({
                         'position': 'absolute',
                         'left': 10,
                         'top': 10,
                         'font-size': '1.2em',
-                        //'opacity': 0.65
-                    }).appendTo(pselect);
-                    //var inp = $('<input>').attr({ type: 'checkbox' }).css({
-                    //    //'margin-right': 20
+                    });
+                    //$('<span>').attr('aria-hidden', true).css({
                     //    'position': 'absolute',
                     //    'left': 10,
-                    //    'top': 10
+                    //    'top': 10,
+                    //    'font-size': '1.2em',
+                    //    //'opacity': 0.65
                     //}).appendTo(pselect);
-                    //inp.on('change', function () {
-                    //    me.setSelected($(this).prop('checked'));
-                    //});
                 }
                 cached.canSelect = canSelect;
             }
 
-            if (selected !== cached.selected) {
-                //var inp = pselect.children('input');
-                //if (inp.length) inp.prop('checked', selected);
-                updateCheckbox();
-                owner.getSelectionController()._selChanged(me);
-                cached.selected = selected;
+            if (selector /*&& selector.getSelected() !== cached.selected*/) {
+                var ck = pselect.data('auCheckBox');
+                if (ck) {
+                    if (selector.getIndeterminate()) {
+                        ck.setStatus('indeterminate');
+                    }
+                    else {
+                        ck.setStatus(selector.getSelected() ? 'checked' : 'unchecked');
+                    }
+                }
+                cached.selected = selector.getSelected();
+
+                if (owner.options.selectionBorderColor) {
+                    panel.parent().css('border-color', selector.getSelected() ? owner.options.selectionBorderColor : 'transparent');
+                }
             }
+            //if (selected !== cached.selected) {
+            //    //var inp = pselect.children('input');
+            //    //if (inp.length) inp.prop('checked', selected);
+            //    updateCheckbox();
+            //    owner.getSelectionController()._selChanged(me);
+            //    cached.selected = selected;
+            //}
 
             if (collapsible !== cached.collapsible) {
                 pxhdr.empty();
@@ -691,13 +748,15 @@ if (typeof Object.create !== 'function') {
         }
 
         function globalSelectable() {
-            return owner.getSelectionController().getMode() !== 'none';
+            var mgr = owner.getSelectionController().getManager();
+            return mgr && mgr.maxCount() > 0;
+            //return owner.getSelectionController().getMode() !== 'none';
         }
 
-        var me = {}, uid = uidgen(), xheader, header, body;
+        var me = {}, uid = uidgen(), cached = {}, xheader, header, body, selector;
         var panel, ptitle, pbody, pselect, pxhdr, phdr;
-        var selected = false, cached = {};
-        var selectable = owner.options.selectable != null ? !!owner.options.selectable : true;
+        //var selected = false;
+        //var selectable = owner.options.selectable != null ? !!owner.options.selectable : true;
         var collapsible = owner.options.collapsible != null ? !!owner.options.collapsible : false;
         var collapsed = owner.options.collapsed != null ? !!owner.options.collapsed : false;
         var deferrer = Deferrer(update, 10);
@@ -722,18 +781,29 @@ if (typeof Object.create !== 'function') {
             deferrer.trigger();
         }
 
-        me.getSelected = function () { return selected; }
-        me.setSelected = function (v) {
-            selected = !!v && selectable && globalSelectable();
+        me.getSelector = function () { return selector; }
+        me.setSelector = function (v) {
+            selector = v;
+            if (selector) {
+                selector.change = function () {
+                    deferrer.trigger();
+                }
+            }
             deferrer.trigger();
         }
 
-        me.getSelectable = function () { return selectable; }
-        me.setSelectable = function (v) {
-            selectable = !!v && globalSelectable();
-            selected = selected && selectable;
-            deferrer.trigger();
-        }
+        //me.getSelected = function () { return selected; }
+        //me.setSelected = function (v) {
+        //    selected = !!v && selectable && globalSelectable();
+        //    deferrer.trigger();
+        //}
+
+        //me.getSelectable = function () { return selectable; }
+        //me.setSelectable = function (v) {
+        //    selectable = !!v && globalSelectable();
+        //    selected = selected && selectable;
+        //    deferrer.trigger();
+        //}
 
         me.getCollapsed = function () { return collapsed; }
         me.setCollapsed = function (v) {
@@ -781,7 +851,12 @@ if (typeof Object.create !== 'function') {
 
 
     function AuCardView() {
+
         function viewBuilder(items) {
+            var selmgr = ctlSelect.getManager();
+            if (selmgr) selmgr.command('clear');
+            var selectable = selmgr && (me.options.selectable != null ? !!me.options.selectable : true);
+
             var children = mrow.children();
             panels.length = 0;
             var proj = me.options.projection || function (x) { return x; }
@@ -799,8 +874,9 @@ if (typeof Object.create !== 'function') {
 
                     var dataItem = proj(items[i]);
                     var p = panelItemController(me, ctr, dataItem);
+                    if (selectable) p.setSelector(selmgr.createProxy(dataItem));
                     panels.push(p);
-                    me.options.panelViewUpdater && me.options.panelViewUpdater(p, dataItem);
+                    me.options.panelViewUpdater && me.options.panelViewUpdater(me, p, dataItem);
                 }
                 while (i < children.length) {
                     children[i++].remove();
@@ -892,6 +968,10 @@ if (typeof Object.create !== 'function') {
         me.getPageController = function () { return ctlPage; }
         me.getSelectionController = function () { return ctlSelect; }
 
+        //me.getStandardSelectorManager = function (name) {
+        //    return StandardSelectionManager[name];
+        //}
+
         me.init = function (options, elem) {
             me.$elem = $(elem);
             me.options = $.extend({}, $.fn.auCardView.options, options);
@@ -901,7 +981,7 @@ if (typeof Object.create !== 'function') {
 
             hrow = $('<div>').addClass('row auCardView-header').appendTo(mainctr);
             ctlSelect = selectionController(me, hrow, panels);
-            ctlSelect.setMode(me.options.selectMode);
+            ctlSelect.setManager(me.options.selectionManager);
 
             ctlSearch = searchController(me, hrow);
             ctlSearch.setVisible(me.options.showSearch);
@@ -931,3 +1011,134 @@ if (typeof Object.create !== 'function') {
 
 })(jQuery);
 
+
+var AuCardViewSelectionManager = (function () {
+    "use strict";
+
+    var managers = {};
+
+    managers.base = function (Nmax) {
+
+        function SelProxy(data) {
+            var sp = {}, sel = false, old = false;
+            sp.getData = function () { return data; }
+            sp.getIndeterminate = function () { return sel == null;}
+            sp.getSelected = function () { return sel; }
+            sp.setSelected = function (v) {
+                //v = !!v;
+                if (sel !== v) {
+                    sel = v;
+                    sp.change && sp.change(sel);
+                    me.notify && me.notify();
+                }
+            }
+
+            sp.hasChanged = function () {
+                var f = sel !== old;
+                old = sel;
+                return f;
+            }
+
+            sp.change = null;
+            sp.dispose = function () { }
+            return sp;
+        }
+
+        var me = {}, proxies = [];
+        me.maxCount = function () { return Nmax; }
+        me.notify = null;
+
+        me.hasChanged = function () {
+            var chg = false;
+            proxies.forEach(function (p) {
+                if (p.hasChanged()) chg = true;
+            });
+            return chg;
+        }
+
+        me.getSelected = function () {
+            var sa = [];
+            proxies.forEach(function (p) {
+                if (p.getSelected()) sa.push(p.getData());
+            });
+            return sa;
+        }
+
+        me.createProxy = function (data) {
+            //if (proxies.length >= Nmax) return;
+            var sp = SelProxy(data);
+            proxies.push(sp);
+            return sp;
+        }
+
+        me.getProxies = function () {
+            return proxies.slice(0);
+        }
+        //me.getProxy = function (data) {
+        //    for (var i = 0; i < proxies.length; i++) {
+        //        var p = proxies[i];
+        //        if (p.getData() === data) return p;
+        //    }
+        //}
+
+        me.command = function (cmd, proxy) {
+            console.log(cmd);
+            switch (cmd) {
+                case 'clear':
+                    proxies.length = 0;
+                    break;
+
+                case 'none':
+                    proxies.forEach(function (p) { p.setSelected(false); })
+                    break;
+
+                case 'all':
+                    proxies.forEach(function (p) { p.setSelected(true); })
+                    break;
+
+                default:
+                    me.xcommand && me.xcommand(cmd, proxy);
+            }
+        }
+
+        return me;
+    }
+
+
+    managers.none = function () {
+        var me = managers.base(0);
+        return me;
+    }
+
+
+    managers.single = function () {
+        var me = managers.base(1);
+        me.xcommand = function (cmd, proxy) {
+            me.command('none');
+            if (cmd === 'panel' || cmd === 'select') {
+                proxy && proxy.setSelected(true);
+            }
+        }
+        return me;
+    }
+
+
+    managers.multi = function () {
+        var me = managers.base(1e6);
+        me.xcommand = function (cmd, proxy) {
+            switch (cmd) {
+                case 'panel':
+                    me.command('none');
+                case 'select':
+                    proxy && proxy.setSelected(true);
+                    break;
+                case 'unselect':
+                    proxy && proxy.setSelected(false);
+                    break;
+            }
+        }
+        return me;
+    }
+
+    return managers;
+})();
