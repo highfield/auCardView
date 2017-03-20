@@ -910,12 +910,19 @@ var AuCardViewSelectionManager = (function () {
             return chg;
         }
 
-        me.getSelected = function () {
-            var sa = [];
-            proxies.forEach(function (p) {
-                if (p.getSelected()) sa.push(p.getData());
-            });
-            return sa;
+        me.getSelected = function (sel) {
+            if (_.isFunction(sel)) {
+                proxies.forEach(function (p) {
+                    if (p.getSelected()) sel(p);
+                });
+            }
+            else {
+                var sa = [];
+                proxies.forEach(function (p) {
+                    if (p.getSelected()) sa.push(p.getData());
+                });
+                return sa;
+            }
         }
 
         me.setSelected = function (sel) {
