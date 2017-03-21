@@ -63,10 +63,10 @@ $(function () {
         selectionBorderColor: 'blue'
     };
     $('#cv1').auCardView(options1);
-    var cv1 = $('#cv1').data('auCardView');
+    //var cv1 = $('#cv1').data('auCardView');
 
     $('#cv2').auCardView(options1);
-    var cv2 = $('#cv2').data('auCardView');
+    //var cv2 = $('#cv2').data('auCardView');
 
     MasterDetailDemo();
 

@@ -36,6 +36,13 @@
     margin-bottom: 15px !important;
 }
 
+.auCardView-item {
+    margin: 2px;
+    outline-width: 2px;
+    outline-style: solid;
+    outline-color: transparent;
+}
+
 .auCardView-card {
     margin: 5px 0px;
     border-width: 2px;

@@ -20,12 +20,14 @@
  */
 
 
-(function ($) {
+var AuCardView = (function ($) {
     "use strict";
+
+    var NS = {};
 
     $.fn.auCardView = function (options) {
         return this.each(function () {
-            var obj = AuCardView();
+            var obj = _AuCardView();
             obj.init(options, this);
             $(this).data('auCardView', obj);
         });
@@ -51,6 +53,30 @@
         var n = 10000;
         return function () { return 'auCardView_ID' + ++n; }
     })();
+
+
+    function Deferrer(callback, delay) {
+        var me = {}, tmr, cbargs;
+
+        me.trigger = function (args) {
+            if (tmr) {
+                if (!args) return;
+                clearTimeout(tmr);
+            }
+            cbargs = args;
+            tmr = setTimeout(function () {
+                callback(cbargs || {});
+                cbargs = null;
+            }, delay);
+        }
+
+        me.release = function () {
+            if (tmr) clearTimeout(tmr);
+            tmr = null;
+        }
+
+        return me;
+    }
 
 
     function searchController(owner, row) {
@@ -456,7 +482,7 @@
         me.setManager = function (v) {
             if (manager) manager.notify = null;
             if (typeof v === 'string') {
-                v = AuCardViewSelectionManager[v]();
+                v = NS.SelectionManager[v]();
             }
             manager = v;
             cctr.empty();
@@ -498,7 +524,7 @@
     }
 
 
-    function panelItemController(owner, row, data) {
+    function OLD_panelItemController(owner, row, data) {
         function build() {
             var css_pselect = {
                 'position': 'absolute',
@@ -680,33 +706,9 @@
     }
 
 
-    function Deferrer(callback, delay) {
-        var me = {}, tmr, cbargs;
+    function _AuCardView() {
 
-        me.trigger = function (args) {
-            if (tmr) {
-                if (!args) return;
-                clearTimeout(tmr);
-            }
-            cbargs = args;
-            tmr = setTimeout(function () {
-                callback(cbargs || {});
-                cbargs = null;
-            }, delay);
-        }
-
-        me.release = function () {
-            if (tmr) clearTimeout(tmr);
-            tmr = null;
-        }
-
-        return me;
-    }
-
-
-    function AuCardView() {
-
-        function viewBuilder(items) {
+        function OLD_viewBuilder(items) {
             var selmgr = ctlSelect.getManager();
             if (selmgr) selmgr.command('clear');
             var selectable = selmgr && (me.options.selectable != null ? !!me.options.selectable : true);
@@ -740,6 +742,20 @@
                 console.error(err);
                 //TODO
             }
+        }
+
+        function viewBuilder(items) {
+            var selmgr = ctlSelect.getManager();
+            if (selmgr) {
+                selmgr.command('clear');
+                //var selectable = me.options.selectable != null ? !!me.options.selectable : true;
+                //items.forEach(function (di) {
+                //    selmgr.createProxy(di);
+                //});
+            }
+
+            ctlList.setDataItems(items);
+            ctlList.update();
         }
 
         function updater(args) {
@@ -818,13 +834,16 @@
 
         $(window).on('resize', resize);
 
-        var me = {}, ctlSearch, ctlSort, ctlPage, ctlSelect, hrow, mrow, frow, dirty = true, run1, panels = [], spinLayer;
+        var me = {}, ctlList, ctlSearch, ctlSort, ctlPage, ctlSelect, hrow, mrow, frow, dirty = true, run1, panels = [], spinLayer;
         var deferrer = Deferrer(updater, 200);
 
+        me.getListController = function () { return ctlList; }
         me.getSearchController = function () { return ctlSearch; }
         me.getSortController = function () { return ctlSort; }
         me.getPageController = function () { return ctlPage; }
         me.getSelectionController = function () { return ctlSelect; }
+
+        me.uidgen = uidgen;
 
         me.init = function (options, elem) {
             me.$elem = $(elem);
@@ -834,7 +853,7 @@
             var mainctr = $("<div>").addClass('container-fluid auCardView-container').appendTo(me.$elem);
 
             hrow = $('<div>').addClass('row auCardView-header').appendTo(mainctr);
-            ctlSelect = selectionController(me, hrow, panels);
+            ctlSelect = selectionController(me, hrow);
             ctlSelect.setManager(me.options.selectionManager);
 
             ctlSearch = searchController(me, hrow);
@@ -851,6 +870,8 @@
 
             spinLayer = $('<div>').addClass('auCardView-spin-layer').appendTo(me.$elem).hide();
             $('<div>').addClass('auCardView-spinner').appendTo($('<div>').appendTo(spinLayer));
+
+            ctlList = NS.ViewElement.listController(me, null, mrow, me.options.listController);
         };
 
         me.reset = function () { dirty = true; }
@@ -863,212 +884,641 @@
         return me;
     }
 
-})(jQuery);
+
+    NS.ViewElement = (function () {
+        "use strict";
+
+        var bag = {};
+
+        //bag.listController = function (owner) {
+        //    var me = {}, outer, inner;
+        //    var builder, updater, status = 0;
+
+        //    me.getOuter = function () { return outer; }
+        //    me.setOuter = function (v) {
+        //        outer = v;
+        //        inner = null;
+        //        status = 0;
+        //    }
+
+        //    me.getBuilder = function () { return builder; }
+        //    me.setBuilder = function (v) {
+        //        builder = v;
+        //        inner = null;
+        //        status = 0;
+        //    }
+
+        //    me.getUpdater = function () { return updater; }
+        //    me.setUpdater = function (v) {
+        //        updater = v;
+        //        status = Math.min(status, 1);
+        //    }
+
+        //    me.update = function (dataItems) {
+        //        if (status === 0) {
+        //            //crea contenitore
+        //            inner = builder && builder(outer) || outer;
+        //            status = 1;
+        //        }
+        //        if (inner) {
+        //            //invoca template per proiettare data-items in children
+        //            var controllers = updater && updater(owner, dataItems);
+        //            if (!_.isArray(controllers)) controllers = [];
+
+        //            var children = inner.children();
+        //            var i = 0;
+        //            for (; i < controllers.length; i++) {
+        //                var ctr;
+        //                if (i >= children.length) {
+        //                    ctr = $('<div>').appendTo(inner);
+        //                }
+        //                else {
+        //                    ctr = $(children[i]);
+        //                    ctr.empty();
+        //                }
+        //                ctr.data('item', controllers[i].getData());
+        //            }
+        //            while (i < children.length) {
+        //                children[i++].remove();
+        //            }
+        //        }
+        //        status = 2;
+        //    }
+
+        //    return me;
+        //}
 
 
-var AuCardViewSelectionManager = (function () {
-    "use strict";
+        bag.listController = function (owner, parent, container, options) {
+            function generator() {
+                var g = {}, i = 0, children = inner.children(), result = [];
 
-    var managers = {};
-
-    managers.base = function (Nmax) {
-
-        function SelProxy(data) {
-            var sp = {}, sel = false, old = false;
-            sp.getData = function () { return data; }
-            sp.getIndeterminate = function () { return sel == null; }
-            sp.getSelected = function () { return sel; }
-            sp.setSelected = function (v) {
-                if (sel !== v) {
-                    sel = v;
-                    sp._change && sp._change(sel);
-                    sp.change && sp.change(sel);
-                    me.notify && me.notify();
-                }
-            }
-
-            sp.hasChanged = function () {
-                var f = sel !== old;
-                old = sel;
-                return f;
-            }
-
-            sp._change = sp.change = null;
-            sp.dispose = function () { }
-            return sp;
-        }
-
-        var me = {}, proxies = [];
-        me.maxCount = function () { return Nmax; }
-        me.notify = null;
-
-        me.hasChanged = function () {
-            var chg = false;
-            proxies.forEach(function (p) {
-                if (p.hasChanged()) chg = true;
-            });
-            return chg;
-        }
-
-        me.getSelected = function (sel) {
-            if (_.isFunction(sel)) {
-                proxies.forEach(function (p) {
-                    if (p.getSelected()) sel(p);
-                });
-            }
-            else {
-                var sa = [];
-                proxies.forEach(function (p) {
-                    if (p.getSelected()) sa.push(p.getData());
-                });
-                return sa;
-            }
-        }
-
-        me.setSelected = function (sel) {
-            if (_.isFunction(sel)) {
-                proxies.forEach(function (p) {
-                    p.setSelected(sel(p));
-                });
-            }
-            else if (_.isArray(sel)) {
-                proxies.forEach(function (p) {
-                    p.setSelected(sel.indexOf(p.getData()) >= 0);
-                });
-            }
-        }
-
-        me.createProxy = function (data) {
-            var sp = SelProxy(data);
-            proxies.push(sp);
-            return sp;
-        }
-
-        me.getProxies = function () {
-            return proxies.slice(0);
-        }
-
-        me.bindCheckBox = function (ckel, proxy) {
-            proxy._change = function () {
-                var ck = ckel.data('auCheckBox');
-                if (ck) {
-                    if (proxy.getIndeterminate()) {
-                        ck.setStatus('indeterminate');
+                g.next = function () {
+                    var c;
+                    if (i >= children.length) {
+                        var c = options.template && options.template() || $('<div>');
+                        c.addClass('auCardView-item').appendTo(inner);
                     }
                     else {
-                        ck.setStatus(proxy.getSelected() ? 'checked' : 'unchecked');
+                        c = $(children[i++]).empty();
+                    }
+                    //var c = (i >= children.length) ? $('<div>').addClass('auCardView-item').appendTo(inner) : $(children[i++]).empty();
+                    result.push(c);
+                    return c;
+                }
+
+                g.close = function () {
+                    while (i < children.length) {
+                        children[i++].remove();
+                    }
+                    return result;
+                }
+
+                return g;
+            }
+
+            options = options || {};
+            var me = {}, dataItems = [], inner;
+
+            me.getOptions = function () { return options; }
+            me.setOptions = function (v) {
+                options = v || {};
+                inner = null;
+            }
+
+            me.getDataItems = function () { return dataItems; }
+            me.setDataItems = function (v) {
+                dataItems = v || [];
+            }
+
+            me.getContainer = function () { return container; }
+
+            me.update = function () {
+                if (!inner) {
+                    //crea contenitore
+                    inner = options.builder && options.builder(container) || container;
+                }
+                if (inner) {
+                    //invoca template per proiettare data-items in children
+                    var gen = generator();
+                    var controllers = options.updater && options.updater(owner, me, gen, dataItems);
+                    var children = gen.close();
+
+                    if (!_.isArray(controllers)) controllers = [];
+                    for (var i = 0; i < controllers.length; i++) {
+                        children[i].data('controller', controllers[i]);
                     }
                 }
             }
-            proxy._change();
 
-            ckel.on('click', function (e) {
-                e.stopPropagation();
-                var ck = $(this).data('auCheckBox');
-                switch (ck.getStatus()) {
-                    case 'checked': me.command('select', proxy); break;
-                    case 'unchecked': me.command('unselect', proxy); break;
-                    case 'indeterminate': me.command('indeterminate', proxy); break;
+            return me;
+        }
+
+
+        bag.itemControllerBase = function (owner, parent, container, data) {
+            var me = {};
+
+            me.getData = function () { return data; }
+
+            me.selectionChanged = function (sel) {
+                if (owner.options.selectionBorderColor) {
+                    container.css('outline-color', sel ? owner.options.selectionBorderColor : 'transparent');
                 }
-            });
-        }
-
-
-        me.command = function (cmd, proxy) {
-            console.log(cmd);
-            switch (cmd) {
-                case 'clear':
-                    proxies.length = 0;
-                    break;
-
-                case 'none':
-                    proxies.forEach(function (p) { p.setSelected(false); })
-                    break;
-
-                case 'all':
-                    proxies.forEach(function (p) { p.setSelected(true); })
-                    break;
-
-                default:
-                    me.xcommand && me.xcommand(cmd, proxy);
             }
+
+            return me;
         }
 
-        return me;
-    }
 
-
-    managers.none = function () {
-        var me = managers.base(0);
-        return me;
-    }
-
-
-    managers.single = function () {
-        var me = managers.base(1);
-        me.xcommand = function (cmd, proxy) {
-            me.command('none');
-            if (cmd === 'panel' || cmd === 'select') {
-                proxy && proxy.setSelected(true);
-            }
-        }
-        return me;
-    }
-
-
-    managers.multi = function () {
-        var me = managers.base(1e6);
-        me.xcommand = function (cmd, proxy) {
-            switch (cmd) {
-                case 'panel':
-                    me.command('none');
-                case 'select':
-                    proxy && proxy.setSelected(true);
-                    break;
-                case 'unselect':
-                    proxy && proxy.setSelected(false);
-                    break;
-            }
-        }
-        return me;
-    }
-
-
-    managers.multimd = function () {
-        var me = managers.base(1e6);
-        me.xcommand = function (cmd, proxy) {
-            if (!proxy) return;
-            if (cmd !== 'select' && cmd !== 'unselect') return;
-            var f = cmd === 'select';
-            proxy.setSelected(f);
-
-            if (proxy.parent) {
-                var nc = 0, ns = 0;
-                me.getProxies().forEach(function (p) {
-                    if (p.parent === proxy.parent) {
-                        nc++;
-                        if (p.getSelected()) ns++;
+        bag.tableRowController = function (owner, parent, container, data) {
+            function build() {
+                var pselect;
+                for (var i = 0; i < cfg.length; i++) {
+                    var td = $('<td>').appendTo(container);
+                    if (cfg[i].selection) {
+                        pselect = $('<div>').appendTo(td);
                     }
+                    else {
+                        td.text(data[cfg[i].name]);
+                    }
+                }
+
+                if (pselect) {
+                    //selectable parts
+                    var mgr = owner.getSelectionController().getManager();
+                    if (mgr && mgr.maxCount() > 0) {
+                        pselect.auCheckBox();
+                        pselect.find('span').css({
+                            'position': 'absolute',
+                            'left': 10,
+                            'top': 10,
+                            'font-size': '1.2em',
+                        });
+                        mgr.bindController(me, pselect);
+                    }
+                }
+            }
+
+            var me = bag.itemControllerBase(owner, parent, container, data);
+
+            var cfg = [
+                { selection: true },
+                { name: 'nome' },
+                { name: 'sigla' }
+            ];
+
+            build();
+
+            return me;
+        }
+
+
+        bag.panelController = function (owner, parent, container, data) {
+            function build() {
+                var css_pselect = {
+                    'position': 'absolute',
+                    //'right': 15
+                    'right': 2,
+                    'width': 40,
+                    'height': 36,
+                    'margin-top': -10,
+                    'background-color': 'transparent'
+                };
+                _.merge(css_pselect, owner.options.panelSelectCSS || {});
+
+                var css_pxhdr = {
+                    'display': 'inline-block'
+                };
+                _.merge(css_pxhdr, owner.options.panelXHeaderCSS || {});
+
+                var css_phdr = {
+                    'display': 'inline-block'
+                };
+                _.merge(css_phdr, owner.options.panelHeaderCSS || {});
+
+                panel = $('<panel>').addClass('panel auCardView-card-panel').appendTo(container);
+                var hdr = $('<div>').addClass('panel-heading').appendTo(panel);
+                ptitle = $('<h4>').addClass('panel-title').appendTo(hdr);
+                pselect = $('<div>').css(css_pselect).appendTo(ptitle);
+                pxhdr = $('<div>').css(css_pxhdr).appendTo(ptitle);
+                phdr = $('<div>').css(css_phdr).appendTo(ptitle);
+
+                var exp = $('<div>').attr('id', 'collapse_' + uid).appendTo(panel);
+                pbody = $('<div>').addClass('panel-body auCardView-card-body').appendTo(exp);
+
+                setPanelClass(owner.options.panelClass || 'panel-default');
+
+                //selectable parts
+                var mgr = owner.getSelectionController().getManager();
+                if (mgr && mgr.maxCount() > 0) {
+                    pselect.auCheckBox();
+                    pselect.find('span').css({
+                        'position': 'absolute',
+                        'left': 10,
+                        'top': 10,
+                        'font-size': '1.2em',
+                    });
+                    var sp = mgr.bindController(me, pselect);
+
+                    if (owner.options.panelClickEnabled) {
+                        panel.on('click', function (e) {
+                            mgr.command('panel', sp);
+                        });
+                    }
+                }
+            }
+
+            //function selectionChanged(sel) {
+            //    if (owner.options.selectionBorderColor) {
+            //        panel.parent().css('border-color', sel ? owner.options.selectionBorderColor : 'transparent');
+            //    }
+            //}
+
+            function update() {
+                //var mgr = owner.getSelectionController().getManager();
+                //var canSelect = selector && mgr && mgr.maxCount() > 0;
+                //if (canSelect !== cached.canSelect) {
+                //    pselect.empty();
+                //    if (canSelect) {
+                //        pselect.auCheckBox();
+                //        pselect.find('span').css({
+                //            'position': 'absolute',
+                //            'left': 10,
+                //            'top': 10,
+                //            'font-size': '1.2em',
+                //        });
+                //        mgr.bindCheckBox(pselect, selector);
+                //    }
+                //    cached.canSelect = canSelect;
+                //}
+
+                if (collapsible !== cached.collapsible) {
+                    pxhdr.empty();
+                    if (collapsible) {
+                        $('<a>').attr({
+                            'data-toggle': 'collapse',
+                            href: '#collapse_' + uid,
+                            'aria-expanded': !!collapsed,
+                            'aria-controls': 'collapse_' + uid
+                        }).appendTo(pxhdr);
+                        pbody.parent().addClass('collapse');
+                    }
+                    else {
+                        $('<div>').appendTo(pxhdr);
+                        pbody.parent().removeClass('collapse');
+                    }
+                    cached.xheader = null;
+                    cached.collapsible = collapsible;
+                }
+
+                if (collapsed !== cached.collapsed) {
+                    if (collapsible) $('#collapse_' + uid).collapse(collapsed ? 'hide' : 'show');
+                    cached.collapsed = collapsed;
+                }
+
+                if (xheader !== cached.xheader) {
+                    var el = pxhdr.children().eq(0).empty();
+                    if (xheader) el.append(xheader);
+                    cached.xheader = xheader;
+                }
+
+                if (header !== cached.header) {
+                    var el = phdr.empty();
+                    if (header) el.append(header);
+                    cached.header = header;
+                }
+
+                if (body !== cached.body) {
+                    var el = pbody.empty();
+                    if (body) {
+                        if (body instanceof jQuery) {
+                            el.append(body);
+                        }
+                        else if (_.isObject(body)) {
+                            el.append(body.getContainer());
+                            body.update();
+                        }
+                    }
+                    cached.body = body;
+                }
+                deferrer.release();
+            }
+
+            function setPanelClass(cls) {
+                var old = panel.data('cls');
+                if (cls !== old) {
+                    if (old) {
+                        panel.removeClass(old);
+                        pbody.removeClass(old);
+                    }
+                    if (cls) {
+                        panel.addClass(cls);
+                        pbody.addClass(cls);
+                    }
+                    panel.data('cls', cls);
+                }
+            }
+
+            var me = bag.itemControllerBase(owner, parent, container, data);
+
+            var uid = owner.uidgen(), cached = {}, xheader, header, body;
+            var panel, ptitle, pbody, pselect, pxhdr, phdr;
+            var collapsible = owner.options.collapsible != null ? !!owner.options.collapsible : false;
+            var collapsed = owner.options.collapsed != null ? !!owner.options.collapsed : false;
+            var deferrer = Deferrer(update, 10);
+
+            me.getXHeader = function () { return xheader; }
+            me.setXHeader = function (v) {
+                xheader = v;
+                deferrer.trigger();
+            }
+
+            me.getHeader = function () { return header; }
+            me.setHeader = function (v) {
+                header = v;
+                deferrer.trigger();
+            }
+
+            me.getBody = function () { return body; }
+            me.setBody = function (v) {
+                body = v;
+                deferrer.trigger();
+            }
+
+            //me.getSelector = function () { return selector; }
+            //me.setSelector = function (v) {
+            //    selector = v;
+            //    if (selector) {
+            //        selector.change = updatePanelSelection;
+            //    }
+            //    deferrer.trigger();
+            //}
+
+            me.getCollapsed = function () { return collapsed; }
+            me.setCollapsed = function (v) {
+                collapsed = !!v && collapsible;
+                deferrer.trigger();
+            }
+
+            me.getCollapsible = function () { return collapsible; }
+            me.setCollapsible = function (v) {
+                collapsible = !!v;
+                collapsed = collapsed && collapsible;
+                deferrer.trigger();
+            }
+
+            me.getPanelClass = function () { return panel && panel.data('cls'); }
+            me.setPanelClass = function (v) { setPanelClass(v); }
+
+            build();
+
+            return me;
+        }
+
+
+        return bag;
+    })();
+
+
+    NS.SelectionManager = (function () {
+        "use strict";
+
+        var managers = {};
+
+        managers.base = function (Nmax) {
+
+            function SelProxy(data) {
+                var sp = {}, sel = false, old = false;
+                sp.getData = function () { return data.getData(); }
+                //sp.getData = function () { return data; }
+                sp.getIndeterminate = function () { return sel == null; }
+                sp.getSelected = function () { return sel; }
+                sp.setSelected = function (v) {
+                    if (sel !== v) {
+                        sel = v;
+                        sp._change && sp._change(sel);
+                        sp.change && sp.change(sel);
+                        me.notify && me.notify();
+                    }
+                }
+
+                sp.hasChanged = function () {
+                    var f = sel !== old;
+                    old = sel;
+                    return f;
+                }
+
+                sp._change = sp.change = null;
+                sp.dispose = function () { }
+                return sp;
+            }
+
+            var me = {}, proxies = [];
+            me.maxCount = function () { return Nmax; }
+            me.notify = null;
+
+            me.hasChanged = function () {
+                var chg = false;
+                proxies.forEach(function (p) {
+                    if (p.hasChanged()) chg = true;
                 });
+                return chg;
+            }
 
-                if (ns === 0) {
-                    proxy.parent.setSelected(false);
-                }
-                else if (ns === nc) {
-                    proxy.parent.setSelected(true);
+            me.getSelected = function (sel) {
+                if (_.isFunction(sel)) {
+                    proxies.forEach(function (p) {
+                        if (p.getSelected()) sel(p);
+                    });
                 }
                 else {
-                    proxy.parent.setSelected(null);
+                    var sa = [];
+                    proxies.forEach(function (p) {
+                        if (p.getSelected()) sa.push(p.getData());
+                    });
+                    return sa;
                 }
             }
-            else {
-                me.getProxies().forEach(function (p) {
-                    if (p.parent === proxy) p.setSelected(f);
-                });
-            }
-        }
-        return me;
-    }
 
-    return managers;
-})();
+            me.setSelected = function (sel) {
+                if (_.isFunction(sel)) {
+                    proxies.forEach(function (p) {
+                        p.setSelected(sel(p));
+                    });
+                }
+                else if (_.isArray(sel)) {
+                    proxies.forEach(function (p) {
+                        p.setSelected(sel.indexOf(p.getData()) >= 0);
+                    });
+                }
+            }
+
+            //me.createProxy = function (data) {
+            //    var sp = SelProxy(data);
+            //    proxies.push(sp);
+            //    return sp;
+            //}
+
+            me.getProxies = function () {
+                return proxies.slice(0);
+            }
+
+            me.bindController = function (controller, ckel) {
+                var proxy = SelProxy(controller);
+                proxies.push(proxy);
+                proxy._change = function () {
+                    var ck = ckel.data('auCheckBox');
+                    if (ck) {
+                        if (proxy.getIndeterminate()) {
+                            ck.setStatus('indeterminate');
+                        }
+                        else {
+                            ck.setStatus(proxy.getSelected() ? 'checked' : 'unchecked');
+                        }
+                    }
+                    controller.selectionChanged(proxy.getSelected());
+                }
+                proxy._change();
+
+                ckel.on('click', function (e) {
+                    e.stopPropagation();
+                    var ck = $(this).data('auCheckBox');
+                    switch (ck.getStatus()) {
+                        case 'checked': me.command('select', proxy); break;
+                        case 'unchecked': me.command('unselect', proxy); break;
+                        case 'indeterminate': me.command('indeterminate', proxy); break;
+                    }
+                });
+
+                return proxy;
+            }
+
+            //me.bindCheckBox = function (ckel, proxy) {
+            //    proxy._change = function () {
+            //        var ck = ckel.data('auCheckBox');
+            //        if (ck) {
+            //            if (proxy.getIndeterminate()) {
+            //                ck.setStatus('indeterminate');
+            //            }
+            //            else {
+            //                ck.setStatus(proxy.getSelected() ? 'checked' : 'unchecked');
+            //            }
+            //        }
+            //    }
+            //    proxy._change();
+
+            //    ckel.on('click', function (e) {
+            //        e.stopPropagation();
+            //        var ck = $(this).data('auCheckBox');
+            //        switch (ck.getStatus()) {
+            //            case 'checked': me.command('select', proxy); break;
+            //            case 'unchecked': me.command('unselect', proxy); break;
+            //            case 'indeterminate': me.command('indeterminate', proxy); break;
+            //        }
+            //    });
+            //}
+
+
+            me.command = function (cmd, proxy) {
+                console.log(cmd);
+                switch (cmd) {
+                    case 'clear':
+                        proxies.length = 0;
+                        break;
+
+                    case 'none':
+                        proxies.forEach(function (p) { p.setSelected(false); })
+                        break;
+
+                    case 'all':
+                        proxies.forEach(function (p) { p.setSelected(true); })
+                        break;
+
+                    default:
+                        me.xcommand && me.xcommand(cmd, proxy);
+                }
+            }
+
+            return me;
+        }
+
+
+        managers.none = function () {
+            var me = managers.base(0);
+            return me;
+        }
+
+
+        managers.single = function () {
+            var me = managers.base(1);
+            me.xcommand = function (cmd, proxy) {
+                me.command('none');
+                if (cmd === 'panel' || cmd === 'select') {
+                    proxy && proxy.setSelected(true);
+                }
+            }
+            return me;
+        }
+
+
+        managers.multi = function () {
+            var me = managers.base(1e6);
+            me.xcommand = function (cmd, proxy) {
+                switch (cmd) {
+                    case 'panel':
+                        me.command('none');
+                    case 'select':
+                        proxy && proxy.setSelected(true);
+                        break;
+                    case 'unselect':
+                        proxy && proxy.setSelected(false);
+                        break;
+                }
+            }
+            return me;
+        }
+
+
+        managers.multimd = function () {
+            var me = managers.base(1e6);
+            me.xcommand = function (cmd, proxy) {
+                if (!proxy) return;
+                if (cmd !== 'select' && cmd !== 'unselect') return;
+                var f = cmd === 'select';
+                proxy.setSelected(f);
+
+                if (proxy.parent) {
+                    var nc = 0, ns = 0;
+                    me.getProxies().forEach(function (p) {
+                        if (p.parent === proxy.parent) {
+                            nc++;
+                            if (p.getSelected()) ns++;
+                        }
+                    });
+
+                    if (ns === 0) {
+                        proxy.parent.setSelected(false);
+                    }
+                    else if (ns === nc) {
+                        proxy.parent.setSelected(true);
+                    }
+                    else {
+                        proxy.parent.setSelected(null);
+                    }
+                }
+                else {
+                    me.getProxies().forEach(function (p) {
+                        if (p.parent === proxy) p.setSelected(f);
+                    });
+                }
+            }
+            return me;
+        }
+
+        return managers;
+    })();
+
+
+    return NS;
+
+})(jQuery);

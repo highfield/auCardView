@@ -22,41 +22,116 @@ var MasterDetailDemo = (function ($) {
     })();
 
 
-    function panelViewUpdater(owner, panel, data) {
-        var selmgr = owner.getSelectionController().getManager();
+    //function OLD_panelViewUpdater(owner, panel, data) {
+    //    var selmgr = owner.getSelectionController().getManager();
 
-        var xhdr = $('<div>');
-        $('<span>').text(data.nome).appendTo(xhdr);
-        panel.setXHeader(xhdr);
+    //    var xhdr = $('<div>');
+    //    $('<span>').text(data.nome).appendTo(xhdr);
+    //    panel.setXHeader(xhdr);
 
-        var body = $('<div>');
-        var tbl = $('<table>').addClass('table table-condensed').appendTo(body);
-        var th = $('<thead>').appendTo(tbl);
-        var tr = $('<tr>').appendTo(th);
-        $('<th>').text('').attr('width', '10%').appendTo(tr);
-        $('<th>').text('Città').attr('width', '60%').appendTo(tr);
-        $('<th>').text('Sigla').attr('width', '30%').appendTo(tr);
+    //    var body = $('<div>');
+    //    var tbl = $('<table>').addClass('table table-condensed').appendTo(body);
+    //    var th = $('<thead>').appendTo(tbl);
+    //    var tr = $('<tr>').appendTo(th);
+    //    $('<th>').text('').attr('width', '10%').appendTo(tr);
+    //    $('<th>').text('Città').attr('width', '60%').appendTo(tr);
+    //    $('<th>').text('Sigla').attr('width', '30%').appendTo(tr);
 
-        var tb = $('<tbody>').appendTo(tbl);
-        data.citta.forEach(function (c) {
-            tr = $('<tr>').appendTo(tb);
-            var tc1 = $('<td>').appendTo(tr);
-            $('<td>').text(c.nome).appendTo(tr);
-            $('<td>').text(c.sigla).appendTo(tr);
+    //    var tb = $('<tbody>').appendTo(tbl);
+    //    data.citta.forEach(function (c) {
+    //        tr = $('<tr>').appendTo(tb);
+    //        var tc1 = $('<td>').appendTo(tr);
+    //        $('<td>').text(c.nome).appendTo(tr);
+    //        $('<td>').text(c.sigla).appendTo(tr);
 
-            var $ck = $('<div>').css({
-                'font-size': '1.2em'
-            }).appendTo(tc1);
-            $ck.auCheckBox();
+    //        var $ck = $('<div>').css({
+    //            'font-size': '1.2em'
+    //        }).appendTo(tc1);
+    //        $ck.auCheckBox();
 
-            var sp = selmgr.createProxy(c);
-            sp.parent = panel.getSelector();
-            selmgr.bindCheckBox($ck, sp);
-        });
+    //        var sp = selmgr.createProxy(c);
+    //        sp.parent = panel.getSelector();
+    //        selmgr.bindCheckBox($ck, sp);
+    //    });
 
-        panel.setBody(body);
+    //    panel.setBody(body);
+    //}
+
+
+    function masterOptions() {
+        var o = {};
+
+        o.updater = function (owner, parent, gen, dataItems) {
+            var result = [];
+            dataItems.forEach(function (di) {
+                var vm = AuCardView.ViewElement.panelController(owner, parent, gen.next(), di);
+
+                var xhdr = $('<div>');
+                $('<span>').text(di.nome).appendTo(xhdr);
+                vm.setXHeader(xhdr);
+
+                var lc = AuCardView.ViewElement.listController(owner, parent, $('<div>'), detailOptions());
+                lc.setDataItems(di.citta);
+                vm.setBody(lc);
+
+                result.push(vm);
+            });
+            return result;
+        }
+
+        return o;
     }
 
+
+    function detailOptions() {
+        var o = {};
+
+        o.builder = function (container) {
+            var tbl = $('<table>').addClass('table table-condensed').appendTo(container);
+            var th = $('<thead>').appendTo(tbl);
+            var tr = $('<tr>').appendTo(th);
+            $('<th>').text('').attr('width', '10%').appendTo(tr);
+            $('<th>').text('Città').attr('width', '60%').appendTo(tr);
+            $('<th>').text('Sigla').attr('width', '30%').appendTo(tr);
+            var tb = $('<tbody>').appendTo(tbl);
+            return tb;
+        }
+
+        o.template = function () {
+            return $('<tr>');
+        }
+
+        o.updater = function (owner, parent, gen, dataItems) {
+            var result = [];
+            dataItems.forEach(function (di) {
+                var vm = AuCardView.ViewElement.tableRowController(owner, parent, gen.next(), di);
+                result.push(vm);
+            });
+            return result;
+        }
+
+        return o;
+    }
+
+
+    //function masterUpdater(owner, gen, dataItems) {
+    //    var result = [];
+    //    dataItems.forEach(function (di) {
+    //        var vm = AuCardView.ViewElement.panelController(owner, gen.next(), di);
+
+    //        var xhdr = $('<div>');
+    //        $('<span>').text(di.nome).appendTo(xhdr);
+    //        vm.setXHeader(xhdr);
+
+    //        var lc = AuCardView.ViewElement.listController(owner, $('<div>'), detailOptions());
+    //        lc.setDataItems(di.citta);
+    //        vm.setBody(lc);
+
+    //        result.push(vm);
+    //    });
+    //    return result;
+    //}
+    
 
     var cv3;
 
@@ -68,7 +143,8 @@ var MasterDetailDemo = (function ($) {
             //showPage: true,
             selectionManager: 'multimd',
             controller: controller,
-            panelViewUpdater: panelViewUpdater,
+            //panelViewUpdater: panelViewUpdater,
+            listController: masterOptions(),
             sort: {
                 active: { field: 'nome', dir: 'asc' },
                 options: [
