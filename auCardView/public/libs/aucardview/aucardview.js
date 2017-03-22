@@ -523,7 +523,7 @@ var AuCardView = (function ($) {
         return me;
     }
 
-
+    /*
     function OLD_panelItemController(owner, row, data) {
         function build() {
             var css_pselect = {
@@ -704,45 +704,45 @@ var AuCardView = (function ($) {
         build();
         return me;
     }
-
+    */
 
     function _AuCardView() {
 
-        function OLD_viewBuilder(items) {
-            var selmgr = ctlSelect.getManager();
-            if (selmgr) selmgr.command('clear');
-            var selectable = selmgr && (me.options.selectable != null ? !!me.options.selectable : true);
+        //function OLD_viewBuilder(items) {
+        //    var selmgr = ctlSelect.getManager();
+        //    if (selmgr) selmgr.command('clear');
+        //    var selectable = selmgr && (me.options.selectable != null ? !!me.options.selectable : true);
 
-            var children = mrow.children();
-            panels.length = 0;
-            var proj = me.options.projection || function (x) { return x; }
-            try {
-                var i = 0;
-                for (; i < items.length; i++) {
-                    var ctr;
-                    if (i >= children.length) {
-                        ctr = $('<div>').addClass('auCardView-card').appendTo(mrow);
-                    }
-                    else {
-                        ctr = $(children[i]);
-                        ctr.empty();
-                    }
+        //    var children = mrow.children();
+        //    panels.length = 0;
+        //    var proj = me.options.projection || function (x) { return x; }
+        //    try {
+        //        var i = 0;
+        //        for (; i < items.length; i++) {
+        //            var ctr;
+        //            if (i >= children.length) {
+        //                ctr = $('<div>').addClass('auCardView-card').appendTo(mrow);
+        //            }
+        //            else {
+        //                ctr = $(children[i]);
+        //                ctr.empty();
+        //            }
 
-                    var dataItem = proj(items[i]);
-                    var p = panelItemController(me, ctr, dataItem);
-                    if (selectable) p.setSelector(selmgr.createProxy(dataItem));
-                    panels.push(p);
-                    me.options.panelViewUpdater && me.options.panelViewUpdater(me, p, dataItem);
-                }
-                while (i < children.length) {
-                    children[i++].remove();
-                }
-            }
-            catch (err) {
-                console.error(err);
-                //TODO
-            }
-        }
+        //            var dataItem = proj(items[i]);
+        //            var p = panelItemController(me, ctr, dataItem);
+        //            if (selectable) p.setSelector(selmgr.createProxy(dataItem));
+        //            panels.push(p);
+        //            me.options.panelViewUpdater && me.options.panelViewUpdater(me, p, dataItem);
+        //        }
+        //        while (i < children.length) {
+        //            children[i++].remove();
+        //        }
+        //    }
+        //    catch (err) {
+        //        console.error(err);
+        //        //TODO
+        //    }
+        //}
 
         function viewBuilder(items) {
             var selmgr = ctlSelect.getManager();
@@ -888,137 +888,63 @@ var AuCardView = (function ($) {
     NS.ViewElement = (function () {
         "use strict";
 
-        var bag = {};
+        function generator(controller) {
+            var inner = controller._getInner();
+            var opts = controller.getOptions();
+            var g = {}, i = 0, children = inner.children(), result = [];
 
-        //bag.listController = function (owner) {
-        //    var me = {}, outer, inner;
-        //    var builder, updater, status = 0;
-
-        //    me.getOuter = function () { return outer; }
-        //    me.setOuter = function (v) {
-        //        outer = v;
-        //        inner = null;
-        //        status = 0;
-        //    }
-
-        //    me.getBuilder = function () { return builder; }
-        //    me.setBuilder = function (v) {
-        //        builder = v;
-        //        inner = null;
-        //        status = 0;
-        //    }
-
-        //    me.getUpdater = function () { return updater; }
-        //    me.setUpdater = function (v) {
-        //        updater = v;
-        //        status = Math.min(status, 1);
-        //    }
-
-        //    me.update = function (dataItems) {
-        //        if (status === 0) {
-        //            //crea contenitore
-        //            inner = builder && builder(outer) || outer;
-        //            status = 1;
-        //        }
-        //        if (inner) {
-        //            //invoca template per proiettare data-items in children
-        //            var controllers = updater && updater(owner, dataItems);
-        //            if (!_.isArray(controllers)) controllers = [];
-
-        //            var children = inner.children();
-        //            var i = 0;
-        //            for (; i < controllers.length; i++) {
-        //                var ctr;
-        //                if (i >= children.length) {
-        //                    ctr = $('<div>').appendTo(inner);
-        //                }
-        //                else {
-        //                    ctr = $(children[i]);
-        //                    ctr.empty();
-        //                }
-        //                ctr.data('item', controllers[i].getData());
-        //            }
-        //            while (i < children.length) {
-        //                children[i++].remove();
-        //            }
-        //        }
-        //        status = 2;
-        //    }
-
-        //    return me;
-        //}
-
-
-        bag.listController = function (owner, parent, container, options) {
-            function generator() {
-                var g = {}, i = 0, children = inner.children(), result = [];
-
-                g.next = function () {
-                    var c;
-                    if (i >= children.length) {
-                        var c = options.template && options.template() || $('<div>');
-                        c.addClass('auCardView-item').appendTo(inner);
-                    }
-                    else {
-                        c = $(children[i++]).empty();
-                    }
-                    //var c = (i >= children.length) ? $('<div>').addClass('auCardView-item').appendTo(inner) : $(children[i++]).empty();
-                    result.push(c);
-                    return c;
+            g.next = function () {
+                var c;
+                if (i >= children.length) {
+                    var c = opts.template && opts.template() || $('<div>');
+                    c.addClass('auCardView-item').appendTo(inner);
                 }
-
-                g.close = function () {
-                    while (i < children.length) {
-                        children[i++].remove();
-                    }
-                    return result;
+                else {
+                    c = $(children[i++]).empty();
                 }
-
-                return g;
+                result.push(c);
+                return c;
             }
 
-            options = options || {};
-            var me = {}, dataItems = [], inner;
-
-            me.getOptions = function () { return options; }
-            me.setOptions = function (v) {
-                options = v || {};
-                inner = null;
-            }
-
-            me.getDataItems = function () { return dataItems; }
-            me.setDataItems = function (v) {
-                dataItems = v || [];
-            }
-
-            me.getContainer = function () { return container; }
-
-            me.update = function () {
-                if (!inner) {
-                    //crea contenitore
-                    inner = options.builder && options.builder(container) || container;
+            g.close = function () {
+                while (i < children.length) {
+                    children[i++].remove();
                 }
-                if (inner) {
-                    //invoca template per proiettare data-items in children
-                    var gen = generator();
-                    var controllers = options.updater && options.updater(owner, me, gen, dataItems);
-                    var children = gen.close();
-
-                    if (!_.isArray(controllers)) controllers = [];
-                    for (var i = 0; i < controllers.length; i++) {
-                        children[i].data('controller', controllers[i]);
-                    }
-                }
+                return result;
             }
 
-            return me;
+            return g;
         }
 
 
-        bag.itemControllerBase = function (owner, parent, container, data) {
-            var me = {};
+        var elements = {};
+
+        elements.itemControllerBase = function (owner, parent, container, options) {
+            options = options || {};
+            var me = {}, data, inner;
+
+            me.getOwner = function () { return owner; }
+            me.getParent = function () { return parent; }
+            me.getContainer = function () { return container; }
+
+            me._getInner = function () { return inner; }
 
             me.getData = function () { return data; }
+            me.setData = function (v) { data = v; }
+
+            me.getOptions = function () { return options; }
+            me.setOptions = function (v) { options = v || {}; }
+
+            me.update = function () {
+                if (!inner) {
+                    //create container
+                    inner = options.builder && options.builder(container) || container;
+                }
+                if (inner) {
+                    //invoke template for projection of data-items to children
+                    me._update && me._update(inner);
+                }
+            }
 
             me.selectionChanged = function (sel) {
                 if (owner.options.selectionBorderColor) {
@@ -1030,7 +956,60 @@ var AuCardView = (function ($) {
         }
 
 
-        bag.tableRowController = function (owner, parent, container, data) {
+        elements.listController = function (owner, parent, container, options) {
+            var me = elements.itemControllerBase(owner, parent, container, options);
+
+            me._update = function (inner) {
+                var opts = controller.getOptions();
+                var gen = generator(me);
+                var controllers = opts.updater && opts.updater(owner, me, gen);
+                var children = gen.close();
+
+                if (!_.isArray(controllers)) controllers = [];
+                for (var i = 0; i < controllers.length; i++) {
+                    children[i].data('controller', controllers[i]);
+                }
+            }
+            //var inner;
+            //options = options || {};
+            //var me = {}, dataItems = [], inner;
+
+            //me.getOptions = function () { return options; }
+            //me.setOptions = function (v) {
+            //    options = v || {};
+            //    inner = null;
+            //}
+
+            //me.getDataItems = function () { return dataItems; }
+            //me.setDataItems = function (v) {
+            //    dataItems = v || [];
+            //}
+
+            //me.getContainer = function () { return container; }
+
+            //me.update = function () {
+            //    if (!inner) {
+            //        //crea contenitore
+            //        inner = options.builder && options.builder(container) || container;
+            //    }
+            //    if (inner) {
+            //        //invoca template per proiettare data-items in children
+            //        var gen = generator();
+            //        var controllers = options.updater && options.updater(owner, me, gen, dataItems);
+            //        var children = gen.close();
+
+            //        if (!_.isArray(controllers)) controllers = [];
+            //        for (var i = 0; i < controllers.length; i++) {
+            //            children[i].data('controller', controllers[i]);
+            //        }
+            //    }
+            //}
+
+            return me;
+        }
+
+
+        elements.tableRowController = function (owner, parent, container, options) {
             function build() {
                 var pselect;
                 for (var i = 0; i < cfg.length; i++) {
@@ -1049,9 +1028,9 @@ var AuCardView = (function ($) {
                     if (mgr && mgr.maxCount() > 0) {
                         pselect.auCheckBox();
                         pselect.find('span').css({
-                            'position': 'absolute',
-                            'left': 10,
-                            'top': 10,
+                            //'position': 'absolute',
+                            //'left': 10,
+                            //'top': 10,
                             'font-size': '1.2em',
                         });
                         mgr.bindController(me, pselect);
@@ -1059,7 +1038,7 @@ var AuCardView = (function ($) {
                 }
             }
 
-            var me = bag.itemControllerBase(owner, parent, container, data);
+            var me = elements.itemControllerBase(owner, parent, container, options);
 
             var cfg = [
                 { selection: true },
@@ -1067,13 +1046,16 @@ var AuCardView = (function ($) {
                 { name: 'sigla' }
             ];
 
+            me._update = function (inner) {
+            }
+
             build();
 
             return me;
         }
 
 
-        bag.panelController = function (owner, parent, container, data) {
+        elements.panelController = function (owner, parent, container, options) {
             function build() {
                 var css_pselect = {
                     'position': 'absolute',
@@ -1128,30 +1110,7 @@ var AuCardView = (function ($) {
                 }
             }
 
-            //function selectionChanged(sel) {
-            //    if (owner.options.selectionBorderColor) {
-            //        panel.parent().css('border-color', sel ? owner.options.selectionBorderColor : 'transparent');
-            //    }
-            //}
-
             function update() {
-                //var mgr = owner.getSelectionController().getManager();
-                //var canSelect = selector && mgr && mgr.maxCount() > 0;
-                //if (canSelect !== cached.canSelect) {
-                //    pselect.empty();
-                //    if (canSelect) {
-                //        pselect.auCheckBox();
-                //        pselect.find('span').css({
-                //            'position': 'absolute',
-                //            'left': 10,
-                //            'top': 10,
-                //            'font-size': '1.2em',
-                //        });
-                //        mgr.bindCheckBox(pselect, selector);
-                //    }
-                //    cached.canSelect = canSelect;
-                //}
-
                 if (collapsible !== cached.collapsible) {
                     pxhdr.empty();
                     if (collapsible) {
@@ -1219,7 +1178,7 @@ var AuCardView = (function ($) {
                 }
             }
 
-            var me = bag.itemControllerBase(owner, parent, container, data);
+            var me = elements.itemControllerBase(owner, parent, container, options);
 
             var uid = owner.uidgen(), cached = {}, xheader, header, body;
             var panel, ptitle, pbody, pselect, pxhdr, phdr;
@@ -1245,15 +1204,6 @@ var AuCardView = (function ($) {
                 deferrer.trigger();
             }
 
-            //me.getSelector = function () { return selector; }
-            //me.setSelector = function (v) {
-            //    selector = v;
-            //    if (selector) {
-            //        selector.change = updatePanelSelection;
-            //    }
-            //    deferrer.trigger();
-            //}
-
             me.getCollapsed = function () { return collapsed; }
             me.setCollapsed = function (v) {
                 collapsed = !!v && collapsible;
@@ -1276,7 +1226,7 @@ var AuCardView = (function ($) {
         }
 
 
-        return bag;
+        return elements;
     })();
 
 
@@ -1287,9 +1237,10 @@ var AuCardView = (function ($) {
 
         managers.base = function (Nmax) {
 
-            function SelProxy(data) {
+            function SelProxy(controller) {
                 var sp = {}, sel = false, old = false;
-                sp.getData = function () { return data.getData(); }
+                sp.getController = function () { return controller; }
+                sp.getData = function () { return controller.getData(); }
                 //sp.getData = function () { return data; }
                 sp.getIndeterminate = function () { return sel == null; }
                 sp.getSelected = function () { return sel; }
