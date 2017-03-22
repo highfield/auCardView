@@ -7,14 +7,12 @@ $(function () {
 
         me.get = function (params) {
             var d = $.Deferred();
-
             $.getJSON("citta", params)
                 .done(function (data) {
                     d.resolve(data);
                 }).fail(function (err) {
                     d.reject(err);
                 });
-
             return d.promise();
         }
 

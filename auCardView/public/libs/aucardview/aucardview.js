@@ -40,8 +40,9 @@ var AuCardView = (function ($) {
         selectionManager: 'none',
         pageSize: 15,
         sort: null,
-        controller: null,
-        panelViewUpdater: null,
+        dataController: null,
+        itemsController: null,
+        //panelViewUpdater: null,
         panelClickEnabled: true,
         selectionBorderColor: 'transparent',
         panelHeaderCSS: null,
@@ -523,245 +524,16 @@ var AuCardView = (function ($) {
         return me;
     }
 
-    /*
-    function OLD_panelItemController(owner, row, data) {
-        function build() {
-            var css_pselect = {
-                'position': 'absolute',
-                //'right': 15
-                'right': 2,
-                'width': 40,
-                'height': 36,
-                'margin-top': -10,
-                'background-color': 'transparent'
-            };
-            _.merge(css_pselect, owner.options.panelSelectCSS || {});
-
-            var css_pxhdr = {
-                'display': 'inline-block'
-            };
-            _.merge(css_pxhdr, owner.options.panelXHeaderCSS || {});
-
-            var css_phdr = {
-                'display': 'inline-block'
-            };
-            _.merge(css_phdr, owner.options.panelHeaderCSS || {});
-
-            panel = $('<panel>').addClass('panel auCardView-card-panel').appendTo(row);
-            var hdr = $('<div>').addClass('panel-heading').appendTo(panel);
-            ptitle = $('<h4>').addClass('panel-title').appendTo(hdr);
-            pselect = $('<div>').css(css_pselect).appendTo(ptitle);
-            pxhdr = $('<div>').css(css_pxhdr).appendTo(ptitle);
-            phdr = $('<div>').css(css_phdr).appendTo(ptitle);
-
-            var exp = $('<div>').attr('id', 'collapse_' + uid).appendTo(panel);
-            pbody = $('<div>').addClass('panel-body auCardView-card-body').appendTo(exp);
-
-            setPanelClass(owner.options.panelClass || 'panel-default');
-
-            if (owner.options.panelClickEnabled) {
-                panel.on('click', function (e) {
-                    var mgr = owner.getSelectionController().getManager();
-                    mgr && mgr.command('panel', selector);
-                });
-            }
-        }
-
-        function setPanelClass(cls) {
-            var old = panel.data('cls');
-            if (cls !== old) {
-                if (old) {
-                    panel.removeClass(old);
-                    pbody.removeClass(old);
-                }
-                if (cls) {
-                    panel.addClass(cls);
-                    pbody.addClass(cls);
-                }
-                panel.data('cls', cls);
-            }
-        }
-
-        function update() {
-            var mgr = owner.getSelectionController().getManager();
-            var canSelect = selector && mgr && mgr.maxCount() > 0;
-            if (canSelect !== cached.canSelect) {
-                pselect.empty();
-                if (canSelect) {
-                    pselect.auCheckBox();
-                    pselect.find('span').css({
-                        'position': 'absolute',
-                        'left': 10,
-                        'top': 10,
-                        'font-size': '1.2em',
-                    });
-                    mgr.bindCheckBox(pselect, selector);
-                }
-                cached.canSelect = canSelect;
-            }
-
-            if (collapsible !== cached.collapsible) {
-                pxhdr.empty();
-                if (collapsible) {
-                    $('<a>').attr({
-                        'data-toggle': 'collapse',
-                        href: '#collapse_' + uid,
-                        'aria-expanded': !!collapsed,
-                        'aria-controls': 'collapse_' + uid
-                    }).appendTo(pxhdr);
-                    pbody.parent().addClass('collapse');
-                }
-                else {
-                    $('<div>').appendTo(pxhdr);
-                    pbody.parent().removeClass('collapse');
-                }
-                cached.xheader = null;
-                cached.collapsible = collapsible;
-            }
-
-            if (collapsed !== cached.collapsed) {
-                if (collapsible) $('#collapse_' + uid).collapse(collapsed ? 'hide' : 'show');
-                cached.collapsed = collapsed;
-            }
-
-            if (xheader !== cached.xheader) {
-                var el = pxhdr.children().eq(0).empty();
-                if (xheader) el.append(xheader);
-                cached.xheader = xheader;
-            }
-
-            if (header !== cached.header) {
-                var el = phdr.empty();
-                if (header) el.append(header);
-                cached.header = header;
-            }
-
-            if (body !== cached.body) {
-                var el = pbody.empty();
-                if (body) el.append(body);
-                cached.body = body;
-            }
-            deferrer.release();
-        }
-
-        function updatePanelSelection() {
-            if (selector && owner.options.selectionBorderColor) {
-                panel.parent().css('border-color', selector.getSelected() ? owner.options.selectionBorderColor : 'transparent');
-            }
-        }
-
-        var me = {}, uid = uidgen(), cached = {}, xheader, header, body, selector;
-        var panel, ptitle, pbody, pselect, pxhdr, phdr;
-        var collapsible = owner.options.collapsible != null ? !!owner.options.collapsible : false;
-        var collapsed = owner.options.collapsed != null ? !!owner.options.collapsed : false;
-        var deferrer = Deferrer(update, 10);
-
-        me.getData = function () { return data; }
-
-        me.getXHeader = function () { return xheader; }
-        me.setXHeader = function (v) {
-            xheader = v;
-            deferrer.trigger();
-        }
-
-        me.getHeader = function () { return header; }
-        me.setHeader = function (v) {
-            header = v;
-            deferrer.trigger();
-        }
-
-        me.getBody = function () { return body; }
-        me.setBody = function (v) {
-            body = v;
-            deferrer.trigger();
-        }
-
-        me.getSelector = function () { return selector; }
-        me.setSelector = function (v) {
-            selector = v;
-            if (selector) {
-                selector.change = updatePanelSelection;
-            }
-            deferrer.trigger();
-        }
-
-        me.getCollapsed = function () { return collapsed; }
-        me.setCollapsed = function (v) {
-            collapsed = !!v && collapsible;
-            deferrer.trigger();
-        }
-
-        me.getCollapsible = function () { return collapsible; }
-        me.setCollapsible = function (v) {
-            collapsible = !!v;
-            collapsed = collapsed && collapsible;
-            deferrer.trigger();
-        }
-
-        me.getPanelClass = function () { return panel && panel.data('cls'); }
-        me.setPanelClass = function (v) { setPanelClass(v); }
-
-        build();
-        return me;
-    }
-    */
 
     function _AuCardView() {
-
-        //function OLD_viewBuilder(items) {
-        //    var selmgr = ctlSelect.getManager();
-        //    if (selmgr) selmgr.command('clear');
-        //    var selectable = selmgr && (me.options.selectable != null ? !!me.options.selectable : true);
-
-        //    var children = mrow.children();
-        //    panels.length = 0;
-        //    var proj = me.options.projection || function (x) { return x; }
-        //    try {
-        //        var i = 0;
-        //        for (; i < items.length; i++) {
-        //            var ctr;
-        //            if (i >= children.length) {
-        //                ctr = $('<div>').addClass('auCardView-card').appendTo(mrow);
-        //            }
-        //            else {
-        //                ctr = $(children[i]);
-        //                ctr.empty();
-        //            }
-
-        //            var dataItem = proj(items[i]);
-        //            var p = panelItemController(me, ctr, dataItem);
-        //            if (selectable) p.setSelector(selmgr.createProxy(dataItem));
-        //            panels.push(p);
-        //            me.options.panelViewUpdater && me.options.panelViewUpdater(me, p, dataItem);
-        //        }
-        //        while (i < children.length) {
-        //            children[i++].remove();
-        //        }
-        //    }
-        //    catch (err) {
-        //        console.error(err);
-        //        //TODO
-        //    }
-        //}
-
-        function viewBuilder(items) {
-            var selmgr = ctlSelect.getManager();
-            if (selmgr) {
-                selmgr.command('clear');
-                //var selectable = me.options.selectable != null ? !!me.options.selectable : true;
-                //items.forEach(function (di) {
-                //    selmgr.createProxy(di);
-                //});
-            }
-
-            ctlList.setDataItems(items);
-            ctlList.update();
-        }
 
         function updater(args) {
             spinLayer.show();
             resize();
             mrow.css('min-height', mrow.height());
+
+            var selmgr = ctlSelect.getManager();
+            if (selmgr) selmgr.command('clear');
 
             var params = {};
             ctlSearch._buildParams(params);
@@ -770,7 +542,7 @@ var AuCardView = (function ($) {
             dirty = false;
 
             var action = args.action || 'get';
-            $.when(me.options.controller[action](params, args.data))
+            $.when(me.options.dataController[action](params, args.data))
                 .then(function (data) {
                     //alert(data.count);
                     spinLayer.hide();
@@ -778,7 +550,10 @@ var AuCardView = (function ($) {
                     ctlPage._update(data);
                     try {
                         if (data && data.items && data.items.constructor === Array) {
-                            viewBuilder(data.items);
+                            if (ctlItems) {
+                                ctlItems.setData(data.items);
+                                ctlItems.update();
+                            }
                             mrow.css('min-height', 0);
                         }
                     }
@@ -834,16 +609,19 @@ var AuCardView = (function ($) {
 
         $(window).on('resize', resize);
 
-        var me = {}, ctlList, ctlSearch, ctlSort, ctlPage, ctlSelect, hrow, mrow, frow, dirty = true, run1, panels = [], spinLayer;
+        var me = {}, ctlItems, ctlSearch, ctlSort, ctlPage, ctlSelect, hrow, mrow, frow, dirty = true, run1, panels = [], spinLayer;
         var deferrer = Deferrer(updater, 200);
 
-        me.getListController = function () { return ctlList; }
         me.getSearchController = function () { return ctlSearch; }
         me.getSortController = function () { return ctlSort; }
         me.getPageController = function () { return ctlPage; }
         me.getSelectionController = function () { return ctlSelect; }
 
-        me.uidgen = uidgen;
+        me.getItemsController = function () { return ctlItems; }
+        me.setItemsController = function (v) {
+            ctlItems = v;
+            me.refresh();
+        }
 
         me.init = function (options, elem) {
             me.$elem = $(elem);
@@ -871,7 +649,7 @@ var AuCardView = (function ($) {
             spinLayer = $('<div>').addClass('auCardView-spin-layer').appendTo(me.$elem).hide();
             $('<div>').addClass('auCardView-spinner').appendTo($('<div>').appendTo(spinLayer));
 
-            ctlList = NS.ViewElement.listController(me, null, mrow, me.options.listController);
+            //ctlList = NS.ViewElement.listController(me, null, mrow, me.options.listController);
         };
 
         me.reset = function () { dirty = true; }
@@ -888,15 +666,13 @@ var AuCardView = (function ($) {
     NS.ViewElement = (function () {
         "use strict";
 
-        function generator(controller) {
-            var inner = controller._getInner();
-            var opts = controller.getOptions();
+        function generator(inner, template) {
             var g = {}, i = 0, children = inner.children(), result = [];
 
             g.next = function () {
                 var c;
                 if (i >= children.length) {
-                    var c = opts.template && opts.template() || $('<div>');
+                    var c = template && template() || $('<div>');
                     c.addClass('auCardView-item').appendTo(inner);
                 }
                 else {
@@ -921,13 +697,17 @@ var AuCardView = (function ($) {
 
         elements.itemControllerBase = function (owner, parent, container, options) {
             options = options || {};
-            var me = {}, data, inner;
+            var me = {}, uid = uidgen(), level = 0, data, inner;
 
+            me.getUid = function () { return uid; }
             me.getOwner = function () { return owner; }
             me.getParent = function () { return parent; }
             me.getContainer = function () { return container; }
 
-            me._getInner = function () { return inner; }
+            //me._getInner = function () { return inner; }
+
+            //me.getLevel = function () { return level; }
+            //me._setLevel = function (v) { level = v; }
 
             me.getData = function () { return data; }
             me.setData = function (v) { data = v; }
@@ -935,10 +715,15 @@ var AuCardView = (function ($) {
             me.getOptions = function () { return options; }
             me.setOptions = function (v) { options = v || {}; }
 
+            me._build = function () {
+                inner = container;
+            }
+
+            me._update = null;
             me.update = function () {
                 if (!inner) {
                     //create container
-                    inner = options.builder && options.builder(container) || container;
+                    inner = me._build && me._build() || container;
                 }
                 if (inner) {
                     //invoke template for projection of data-items to children
@@ -955,70 +740,190 @@ var AuCardView = (function ($) {
             return me;
         }
 
+        elements.itemBase = function () {
+            var me = {}, uid = uidgen(), owner, parent, container, data, inner;
+
+            me.getUid = function () { return uid; }
+            me.getOwner = function () { return owner; }
+            me.getParent = function () { return parent; }
+            me.getContainer = function () { return container; }
+
+            me.getData = function () { return data; }
+            me.setData = function (v) { data = v; }
+
+            me._setContext = function (o, p, c, d) {
+                owner = o;
+                parent = p;
+                container = c;
+                data = d;
+            }
+
+            me.build = null;
+            me.update = null;
+
+            me._load = function () {
+                if (!inner) {
+                    //create container
+                    inner = me.build && me.build(container) || container;
+                }
+                if (inner) {
+                    //invoke template for projection of data-items to children
+                    me.update && me.update(inner);
+                }
+            }
+
+            me.selectionChanged = function (sel) {
+                if (owner.options.selectionBorderColor) {
+                    container.css('outline-color', sel ? owner.options.selectionBorderColor : 'transparent');
+                }
+            }
+
+            return me;
+        }
+
+
+        elements.list = function () {
+            var me = elements.itemBase(), dataItems, controllers = [];
+
+            me.project = null;
+            me.itemContainer = null;
+            me.template = null;
+
+            me.update = function (inner) {
+                dataItems = me.project && me.project(me.getData()) || me.getData();
+                if (!_.isArray(dataItems)) dataItems = [];
+
+                controllers.length = 0;
+                var gen = generator(inner, me.itemContainer);
+                for (var i = 0; i < dataItems.length; i++) {
+                    var ctl = me.template && me.template(dataItems[i]);
+                    if (ctl) {
+                        var cctr = gen.next();
+                        ctl._setContext(me.getOwner(), me, cctr, dataItems[i]);
+                        controllers.push(ctl);
+                    }
+                }
+                gen.close();
+                controllers.forEach(function (ctl) {
+                    ctl._load();
+                });
+            }
+
+            return me;
+        }
+
+
+        elements.table = function () {
+            var me = elements.list(), columns = [];
+
+            me.getColumns = function () { return columns; }
+            me.setColumns = function (v) { columns = v || []; }
+
+            me._build = function (container) {
+                var tbl = $('<table>').addClass('table table-condensed').appendTo(container);
+                var th = $('<thead>').appendTo(tbl);
+                var tr = $('<tr>').appendTo(th);
+                for (var i = 0; i < columns.length; i++) {
+                    var th = $('<th>').appendTo(tr);
+                    if (columns[i].selection) {
+                        th.attr('width', 40);
+                    }
+                    else {
+                        if (columns[i].width) th.attr('width', columns[i].width);
+                        th.text(columns[i].title || columns[i].name);
+                    }
+                }
+                var tb = $('<tbody>').appendTo(tbl);
+                return tb;
+            }
+
+            me.project = null;
+            me.itemContainer = null;
+            me.template = null;
+
+            return me;
+        }
 
         elements.listController = function (owner, parent, container, options) {
             var me = elements.itemControllerBase(owner, parent, container, options);
+            //if (parent) me._setLevel(parent.getLevel() + 1);
 
             me._update = function (inner) {
-                var opts = controller.getOptions();
-                var gen = generator(me);
+                var opts = me.getOptions();
+                var gen = generator(inner);
                 var controllers = opts.updater && opts.updater(owner, me, gen);
                 var children = gen.close();
 
                 if (!_.isArray(controllers)) controllers = [];
                 for (var i = 0; i < controllers.length; i++) {
                     children[i].data('controller', controllers[i]);
+                    //controllers[i]._setLevel(me.getLevel());
+                    controllers[i].update();
                 }
             }
-            //var inner;
-            //options = options || {};
-            //var me = {}, dataItems = [], inner;
 
-            //me.getOptions = function () { return options; }
-            //me.setOptions = function (v) {
-            //    options = v || {};
-            //    inner = null;
-            //}
+            return me;
+        }
 
-            //me.getDataItems = function () { return dataItems; }
-            //me.setDataItems = function (v) {
-            //    dataItems = v || [];
-            //}
 
-            //me.getContainer = function () { return container; }
+        elements.tableController = function (owner, parent, container, options) {
+            var me = elements.itemControllerBase(owner, parent, container, options);
+            //if (parent) me._setLevel(parent.getLevel() + 1);
 
-            //me.update = function () {
-            //    if (!inner) {
-            //        //crea contenitore
-            //        inner = options.builder && options.builder(container) || container;
-            //    }
-            //    if (inner) {
-            //        //invoca template per proiettare data-items in children
-            //        var gen = generator();
-            //        var controllers = options.updater && options.updater(owner, me, gen, dataItems);
-            //        var children = gen.close();
+            me._build = function () {
+                var columns = me.getOptions().columns || [];
 
-            //        if (!_.isArray(controllers)) controllers = [];
-            //        for (var i = 0; i < controllers.length; i++) {
-            //            children[i].data('controller', controllers[i]);
-            //        }
-            //    }
-            //}
+                var tbl = $('<table>').addClass('table table-condensed').appendTo(container);
+                var th = $('<thead>').appendTo(tbl);
+                var tr = $('<tr>').appendTo(th);
+                for (var i = 0; i < columns.length; i++) {
+                    var th = $('<th>').appendTo(tr);
+                    if (columns[i].selection) {
+                        th.attr('width', 40);
+                    }
+                    else {
+                        if (columns[i].width) th.attr('width', columns[i].width);
+                        th.text(columns[i].title || columns[i].name);
+                    }
+                }
+                var tb = $('<tbody>').appendTo(tbl);
+                return tb;
+            }
+
+            me._update = function (inner) {
+                var opts = me.getOptions();
+                var gen = generator(inner, function () {
+                    return $('<tr>');
+                });
+                var controllers = opts.updater && opts.updater(owner, me, gen);
+                var children = gen.close();
+
+                if (!_.isArray(controllers)) controllers = [];
+                for (var i = 0; i < controllers.length; i++) {
+                    children[i].data('controller', controllers[i]);
+                    //controllers[i]._setLevel(me.getLevel());
+                    controllers[i].update();
+                }
+            }
 
             return me;
         }
 
 
         elements.tableRowController = function (owner, parent, container, options) {
-            function build() {
+            var me = elements.itemControllerBase(owner, parent, container, options);
+            var cells = [];
+
+            me._build = function () {
+                var columns = parent.getOptions().columns || [];
+                cells.length = 0;
+
                 var pselect;
-                for (var i = 0; i < cfg.length; i++) {
+                for (var i = 0; i < columns.length; i++) {
                     var td = $('<td>').appendTo(container);
-                    if (cfg[i].selection) {
+                    cells.push(td);
+                    if (columns[i].selection) {
                         pselect = $('<div>').appendTo(td);
-                    }
-                    else {
-                        td.text(data[cfg[i].name]);
                     }
                 }
 
@@ -1036,79 +941,23 @@ var AuCardView = (function ($) {
                         mgr.bindController(me, pselect);
                     }
                 }
+                return container;
             }
-
-            var me = elements.itemControllerBase(owner, parent, container, options);
-
-            var cfg = [
-                { selection: true },
-                { name: 'nome' },
-                { name: 'sigla' }
-            ];
 
             me._update = function (inner) {
+                var columns = parent.getOptions().columns || [];
+                for (var i = 0; i < columns.length; i++) {
+                    if (columns[i].name) {
+                        cells[i].text(me.getData()[columns[i].name]);
+                    }
+                }
             }
-
-            build();
 
             return me;
         }
 
 
         elements.panelController = function (owner, parent, container, options) {
-            function build() {
-                var css_pselect = {
-                    'position': 'absolute',
-                    //'right': 15
-                    'right': 2,
-                    'width': 40,
-                    'height': 36,
-                    'margin-top': -10,
-                    'background-color': 'transparent'
-                };
-                _.merge(css_pselect, owner.options.panelSelectCSS || {});
-
-                var css_pxhdr = {
-                    'display': 'inline-block'
-                };
-                _.merge(css_pxhdr, owner.options.panelXHeaderCSS || {});
-
-                var css_phdr = {
-                    'display': 'inline-block'
-                };
-                _.merge(css_phdr, owner.options.panelHeaderCSS || {});
-
-                panel = $('<panel>').addClass('panel auCardView-card-panel').appendTo(container);
-                var hdr = $('<div>').addClass('panel-heading').appendTo(panel);
-                ptitle = $('<h4>').addClass('panel-title').appendTo(hdr);
-                pselect = $('<div>').css(css_pselect).appendTo(ptitle);
-                pxhdr = $('<div>').css(css_pxhdr).appendTo(ptitle);
-                phdr = $('<div>').css(css_phdr).appendTo(ptitle);
-
-                var exp = $('<div>').attr('id', 'collapse_' + uid).appendTo(panel);
-                pbody = $('<div>').addClass('panel-body auCardView-card-body').appendTo(exp);
-
-                setPanelClass(owner.options.panelClass || 'panel-default');
-
-                //selectable parts
-                var mgr = owner.getSelectionController().getManager();
-                if (mgr && mgr.maxCount() > 0) {
-                    pselect.auCheckBox();
-                    pselect.find('span').css({
-                        'position': 'absolute',
-                        'left': 10,
-                        'top': 10,
-                        'font-size': '1.2em',
-                    });
-                    var sp = mgr.bindController(me, pselect);
-
-                    if (owner.options.panelClickEnabled) {
-                        panel.on('click', function (e) {
-                            mgr.command('panel', sp);
-                        });
-                    }
-                }
-            }
 
             function update() {
                 if (collapsible !== cached.collapsible) {
@@ -1116,9 +965,9 @@ var AuCardView = (function ($) {
                     if (collapsible) {
                         $('<a>').attr({
                             'data-toggle': 'collapse',
-                            href: '#collapse_' + uid,
+                            href: '#collapse_' + me.getUid(),
                             'aria-expanded': !!collapsed,
-                            'aria-controls': 'collapse_' + uid
+                            'aria-controls': 'collapse_' + me.getUid()
                         }).appendTo(pxhdr);
                         pbody.parent().addClass('collapse');
                     }
@@ -1131,7 +980,7 @@ var AuCardView = (function ($) {
                 }
 
                 if (collapsed !== cached.collapsed) {
-                    if (collapsible) $('#collapse_' + uid).collapse(collapsed ? 'hide' : 'show');
+                    if (collapsible) $('#collapse_' + me.getUid()).collapse(collapsed ? 'hide' : 'show');
                     cached.collapsed = collapsed;
                 }
 
@@ -1180,7 +1029,7 @@ var AuCardView = (function ($) {
 
             var me = elements.itemControllerBase(owner, parent, container, options);
 
-            var uid = owner.uidgen(), cached = {}, xheader, header, body;
+            var cached = {}, xheader, header, body;
             var panel, ptitle, pbody, pselect, pxhdr, phdr;
             var collapsible = owner.options.collapsible != null ? !!owner.options.collapsible : false;
             var collapsed = owner.options.collapsed != null ? !!owner.options.collapsed : false;
@@ -1220,7 +1069,63 @@ var AuCardView = (function ($) {
             me.getPanelClass = function () { return panel && panel.data('cls'); }
             me.setPanelClass = function (v) { setPanelClass(v); }
 
-            build();
+            me._build = function () {
+                var css_pselect = {
+                    'position': 'absolute',
+                    //'right': 15
+                    'right': 2,
+                    'width': 40,
+                    'height': 36,
+                    'margin-top': -10,
+                    'background-color': 'transparent'
+                };
+                _.merge(css_pselect, owner.options.panelSelectCSS || {});
+
+                var css_pxhdr = {
+                    'display': 'inline-block'
+                };
+                _.merge(css_pxhdr, owner.options.panelXHeaderCSS || {});
+
+                var css_phdr = {
+                    'display': 'inline-block'
+                };
+                _.merge(css_phdr, owner.options.panelHeaderCSS || {});
+
+                panel = $('<panel>').addClass('panel auCardView-card-panel').appendTo(container);
+                var hdr = $('<div>').addClass('panel-heading').appendTo(panel);
+                ptitle = $('<h4>').addClass('panel-title').appendTo(hdr);
+                pselect = $('<div>').css(css_pselect).appendTo(ptitle);
+                pxhdr = $('<div>').css(css_pxhdr).appendTo(ptitle);
+                phdr = $('<div>').css(css_phdr).appendTo(ptitle);
+
+                var exp = $('<div>').attr('id', 'collapse_' + me.getUid()).appendTo(panel);
+                pbody = $('<div>').addClass('panel-body auCardView-card-body').appendTo(exp);
+
+                setPanelClass(owner.options.panelClass || 'panel-default');
+
+                //selectable parts
+                var mgr = owner.getSelectionController().getManager();
+                if (mgr && mgr.maxCount() > 0) {
+                    pselect.auCheckBox();
+                    pselect.find('span').css({
+                        'position': 'absolute',
+                        'left': 10,
+                        'top': 10,
+                        'font-size': '1.2em',
+                    });
+                    var sp = mgr.bindController(me, pselect);
+
+                    if (owner.options.panelClickEnabled) {
+                        panel.on('click', function (e) {
+                            mgr.command('panel', sp);
+                        });
+                    }
+                }
+            }
+
+            me._update = function (inner) {
+                update();
+            }
 
             return me;
         }
@@ -1240,8 +1145,6 @@ var AuCardView = (function ($) {
             function SelProxy(controller) {
                 var sp = {}, sel = false, old = false;
                 sp.getController = function () { return controller; }
-                sp.getData = function () { return controller.getData(); }
-                //sp.getData = function () { return data; }
                 sp.getIndeterminate = function () { return sel == null; }
                 sp.getSelected = function () { return sel; }
                 sp.setSelected = function (v) {
@@ -1264,7 +1167,7 @@ var AuCardView = (function ($) {
                 return sp;
             }
 
-            var me = {}, proxies = [];
+            var me = {}, proxies = [], map = {};
             me.maxCount = function () { return Nmax; }
             me.notify = null;
 
@@ -1285,7 +1188,7 @@ var AuCardView = (function ($) {
                 else {
                     var sa = [];
                     proxies.forEach(function (p) {
-                        if (p.getSelected()) sa.push(p.getData());
+                        if (p.getSelected()) sa.push(p.getController().getData());
                     });
                     return sa;
                 }
@@ -1299,24 +1202,26 @@ var AuCardView = (function ($) {
                 }
                 else if (_.isArray(sel)) {
                     proxies.forEach(function (p) {
-                        p.setSelected(sel.indexOf(p.getData()) >= 0);
+                        p.setSelected(sel.indexOf(p.getController().getData()) >= 0);
                     });
                 }
             }
-
-            //me.createProxy = function (data) {
-            //    var sp = SelProxy(data);
-            //    proxies.push(sp);
-            //    return sp;
-            //}
 
             me.getProxies = function () {
                 return proxies.slice(0);
             }
 
+            me.getLogicalParent = function (proxy) {
+                var parent = proxy.getController().getParent().getParent();
+                if (parent) {
+                    return map[parent.getUid()];
+                }
+            }
+
             me.bindController = function (controller, ckel) {
                 var proxy = SelProxy(controller);
                 proxies.push(proxy);
+                map[controller.getUid()] = proxy;
                 proxy._change = function () {
                     var ck = ckel.data('auCheckBox');
                     if (ck) {
@@ -1344,37 +1249,13 @@ var AuCardView = (function ($) {
                 return proxy;
             }
 
-            //me.bindCheckBox = function (ckel, proxy) {
-            //    proxy._change = function () {
-            //        var ck = ckel.data('auCheckBox');
-            //        if (ck) {
-            //            if (proxy.getIndeterminate()) {
-            //                ck.setStatus('indeterminate');
-            //            }
-            //            else {
-            //                ck.setStatus(proxy.getSelected() ? 'checked' : 'unchecked');
-            //            }
-            //        }
-            //    }
-            //    proxy._change();
-
-            //    ckel.on('click', function (e) {
-            //        e.stopPropagation();
-            //        var ck = $(this).data('auCheckBox');
-            //        switch (ck.getStatus()) {
-            //            case 'checked': me.command('select', proxy); break;
-            //            case 'unchecked': me.command('unselect', proxy); break;
-            //            case 'indeterminate': me.command('indeterminate', proxy); break;
-            //        }
-            //    });
-            //}
-
 
             me.command = function (cmd, proxy) {
                 console.log(cmd);
                 switch (cmd) {
                     case 'clear':
                         proxies.length = 0;
+                        map = {};
                         break;
 
                     case 'none':
@@ -1438,28 +1319,31 @@ var AuCardView = (function ($) {
                 var f = cmd === 'select';
                 proxy.setSelected(f);
 
-                if (proxy.parent) {
+                var controller = proxy.getController();
+                var parent = controller.getParent().getParent();
+                if (parent) {
                     var nc = 0, ns = 0;
                     me.getProxies().forEach(function (p) {
-                        if (p.parent === proxy.parent) {
+                        if (p.getController().getParent().getParent() === parent) {
                             nc++;
                             if (p.getSelected()) ns++;
                         }
                     });
 
+                    var pproxy = me.getLogicalParent(proxy);
                     if (ns === 0) {
-                        proxy.parent.setSelected(false);
+                        pproxy.setSelected(false);
                     }
                     else if (ns === nc) {
-                        proxy.parent.setSelected(true);
+                        pproxy.setSelected(true);
                     }
                     else {
-                        proxy.parent.setSelected(null);
+                        pproxy.setSelected(null);
                     }
                 }
                 else {
                     me.getProxies().forEach(function (p) {
-                        if (p.parent === proxy) p.setSelected(f);
+                        if (p.getController().getParent().getParent() === controller) p.setSelected(f);
                     });
                 }
             }
