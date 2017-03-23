@@ -2,7 +2,7 @@
 var MasterDetailDemo = (function ($) {
     "use strict";
 
-    var controller = (function () {
+    var dataController = (function () {
         var me = {};
 
         me.get = function (params) {
@@ -20,56 +20,92 @@ var MasterDetailDemo = (function ($) {
     })();
 
 
-    function masterOptions() {
-        var o = {};
+    //function masterOptions() {
+    //    var o = {};
 
-        o.updater = function (owner, controller, gen) {
-            var result = [];
-            var items = controller.getData() || [];
-            items.forEach(function (di) {
-                var vm = AuCardView.ViewElement.panelController(owner, controller, gen.next());
-                vm.setData(di);
+    //    o.updater = function (owner, controller, gen) {
+    //        var result = [];
+    //        var items = controller.getData() || [];
+    //        items.forEach(function (di) {
+    //            var vm = AuCardView.ViewElement.panelController(owner, controller, gen.next());
+    //            vm.setData(di);
 
-                var xhdr = $('<div>');
-                $('<span>').text(di.nome).appendTo(xhdr);
-                vm.setXHeader(xhdr);
+    //            var xhdr = $('<div>');
+    //            $('<span>').text(di.nome).appendTo(xhdr);
+    //            vm.setXHeader(xhdr);
 
-                var lc = AuCardView.ViewElement.tableController(owner, vm, $('<div>'), detailOptions());
-                lc.setData(di.citta);
-                vm.setBody(lc);
+    //            var lc = AuCardView.ViewElement.tableController(owner, vm, $('<div>'), detailOptions());
+    //            lc.setData(di.citta);
+    //            vm.setBody(lc);
 
-                result.push(vm);
-            });
-            return result;
-        }
+    //            result.push(vm);
+    //        });
+    //        return result;
+    //    }
 
-        return o;
-    }
+    //    return o;
+    //}
 
 
-    function detailOptions() {
-        var o = {};
+    //function detailOptions() {
+    //    var o = {};
 
-        o.columns = [
+    //    o.columns = [
+    //        { selection: true },
+    //        { name: 'nome', width: '60%', title: 'Città' },
+    //        { name: 'sigla', width: '30%', title: 'Sigla' }
+    //    ];
+
+    //    o.updater = function (owner, controller, gen) {
+    //        var result = [];
+    //        var items = controller.getData() || [];
+    //        items.forEach(function (di) {
+    //            var vm = AuCardView.ViewElement.tableRowController(owner, controller, gen.next());
+    //            vm.setData(di);
+    //            result.push(vm);
+    //        });
+    //        return result;
+    //    }
+
+    //    return o;
+    //}
+
+
+    function Y() {
+        var me = AuCardView.ViewElement.table();
+        me.setColumns([
             { selection: true },
             { name: 'nome', width: '60%', title: 'Città' },
             { name: 'sigla', width: '30%', title: 'Sigla' }
-        ];
+        ]);
 
-        o.updater = function (owner, controller, gen) {
-            var result = [];
-            var items = controller.getData() || [];
-            items.forEach(function (di) {
-                var vm = AuCardView.ViewElement.tableRowController(owner, controller, gen.next());
-                vm.setData(di);
-                result.push(vm);
-            });
-            return result;
+        me.template = function (data) {
+            return AuCardView.ViewElement.tableRow();
         }
 
-        return o;
+        return me;
     }
 
+
+    function Z() {
+        var me = AuCardView.ViewElement.list();
+
+        me.template = function (data) {
+            var vm = AuCardView.ViewElement.panel();
+
+            var xhdr = $('<div>');
+            $('<span>').text(data.nome).appendTo(xhdr);
+            vm.setXHeader(xhdr);
+
+            var lc = Y();
+            lc.setData(data.citta);
+            vm.setBody(lc);
+
+            return vm;
+        }
+
+        return me;
+    }
 
     var cv3;
 
@@ -80,9 +116,10 @@ var MasterDetailDemo = (function ($) {
             showSort: true,
             //showPage: true,
             selectionManager: 'multimd',
-            controller: controller,
+            dataController: dataController,
             //panelViewUpdater: panelViewUpdater,
-            listController: masterOptions(),
+            //listController: masterOptions(),
+            itemsController: Z(),
             sort: {
                 active: { field: 'nome', dir: 'asc' },
                 options: [

@@ -2,7 +2,7 @@
 $(function () {
     "use strict";
 
-    var controller = (function () {
+    var dataController = (function () {
         var me = {};
 
         me.get = function (params) {
@@ -20,25 +20,56 @@ $(function () {
     })();
 
 
-    function panelViewUpdater(owner, panel, data) {
-        var xhdr = $('<div>');
-        $('<i>').addClass('fa fa-bath').attr('aria-hidden', true).appendTo(xhdr);
-        $('<span>').text(data.nome + ' (' + data.sigla_automobilistica + ')').appendTo(xhdr);
-        panel.setXHeader(xhdr);
+    //function panelViewUpdater(owner, panel, data) {
+    //    var xhdr = $('<div>');
+    //    $('<i>').addClass('fa fa-bath').attr('aria-hidden', true).appendTo(xhdr);
+    //    $('<span>').text(data.nome + ' (' + data.sigla_automobilistica + ')').appendTo(xhdr);
+    //    panel.setXHeader(xhdr);
 
-        var body = $('<div>');
-        $('<h6>').addClass('card-subtitle mb-2 text-muted').text(data.regione).appendTo(body);
-        $('<p>').addClass('card-text').text("Coordinate: long=" + data.longitudine + "; lat=" + data.latitudine).appendTo(body);
-        $('<a>').addClass('card-link').attr({
-            'href': 'http://maps.google.com/maps?q=' + data.latitudine + ',' + data.longitudine,
-            'target': '_blank'
-        }).text('Apri mappa...').appendTo(body);
-        panel.setBody(body);
+    //    var body = $('<div>');
+    //    $('<h6>').addClass('card-subtitle mb-2 text-muted').text(data.regione).appendTo(body);
+    //    $('<p>').addClass('card-text').text("Coordinate: long=" + data.longitudine + "; lat=" + data.latitudine).appendTo(body);
+    //    $('<a>').addClass('card-link').attr({
+    //        'href': 'http://maps.google.com/maps?q=' + data.latitudine + ',' + data.longitudine,
+    //        'target': '_blank'
+    //    }).text('Apri mappa...').appendTo(body);
+    //    panel.setBody(body);
 
-        if (demoCardCollapsible) panel.setCollapsible(regionArea[data.regione] !== 'nord');
-        if (demoCardCollapsed) panel.setCollapsed(regionArea[data.regione] !== 'centro');
-        if (demoCardSelectable) panel.setSelectable(regionArea[data.regione] !== 'sud');
-        if (demoCardColorized) panel.setPanelClass(panelShades[Math.floor(Math.random() * panelShades.length)]);
+    //    if (demoCardCollapsible) panel.setCollapsible(regionArea[data.regione] !== 'nord');
+    //    if (demoCardCollapsed) panel.setCollapsed(regionArea[data.regione] !== 'centro');
+    //    if (demoCardSelectable) panel.setSelectable(regionArea[data.regione] !== 'sud');
+    //    if (demoCardColorized) panel.setPanelClass(panelShades[Math.floor(Math.random() * panelShades.length)]);
+    //}
+
+    function TT() {
+        var me = AuCardView.ViewElement.list();
+
+        me.template = function (data) {
+            var vm = AuCardView.ViewElement.panel();
+
+            var xhdr = $('<div>');
+            $('<i>').addClass('fa fa-bath').attr('aria-hidden', true).appendTo(xhdr);
+            $('<span>').text(data.nome + ' (' + data.sigla_automobilistica + ')').appendTo(xhdr);
+            vm.setXHeader(xhdr);
+
+            var body = $('<div>');
+            $('<h6>').addClass('card-subtitle mb-2 text-muted').text(data.regione).appendTo(body);
+            $('<p>').addClass('card-text').text("Coordinate: long=" + data.longitudine + "; lat=" + data.latitudine).appendTo(body);
+            $('<a>').addClass('card-link').attr({
+                'href': 'http://maps.google.com/maps?q=' + data.latitudine + ',' + data.longitudine,
+                'target': '_blank'
+            }).text('Apri mappa...').appendTo(body);
+            vm.setBody(body);
+
+            if (demoCardCollapsible) vm.setCollapsible(regionArea[data.regione] !== 'nord');
+            if (demoCardCollapsed) vm.setCollapsed(regionArea[data.regione] !== 'centro');
+            if (demoCardSelectable) vm.setSelectable(regionArea[data.regione] !== 'sud');
+            if (demoCardColorized) vm.setPanelClass(panelShades[Math.floor(Math.random() * panelShades.length)]);
+
+            return vm;
+        }
+
+        return me;
     }
 
 
@@ -47,8 +78,9 @@ $(function () {
         //showSort: true,
         //showPage: true,
         //selectionManager: 'multi',
-        controller: controller,
-        panelViewUpdater: panelViewUpdater,
+        dataController: dataController,
+        //panelViewUpdater: panelViewUpdater,
+        itemsController: TT(),
         sort: {
             active: { field: 'nome', dir: 'asc' },
             options: [
@@ -61,10 +93,24 @@ $(function () {
         selectionBorderColor: 'blue'
     };
     $('#cv1').auCardView(options1);
-    //var cv1 = $('#cv1').data('auCardView');
+    var cv1 = $('#cv1').data('auCardView');
 
-    $('#cv2').auCardView(options1);
-    //var cv2 = $('#cv2').data('auCardView');
+    var options2 = {
+        dataController: dataController,
+        itemsController: TT(),
+        sort: {
+            active: { field: 'nome', dir: 'asc' },
+            options: [
+                { field: 'nome', label: 'Nome' }
+            ]
+        },
+        panelXHeaderCSS: {
+            'margin-left': 20
+        },
+        selectionBorderColor: 'blue'
+    };
+    $('#cv2').auCardView(options2);
+    var cv2 = $('#cv2').data('auCardView');
 
     MasterDetailDemo();
 
@@ -75,7 +121,7 @@ $(function () {
             showSort: true,
             showPage: true,
             selectionManager: 'multi',
-            controller: controller,
+            dataController: dataController,
             panelViewUpdater: panelViewUpdater,
             sort: {
                 active: { field: 'nome', dir: 'asc' },

@@ -552,7 +552,7 @@ var AuCardView = (function ($) {
                         if (data && data.items && data.items.constructor === Array) {
                             if (ctlItems) {
                                 ctlItems.setData(data.items);
-                                ctlItems.update();
+                                ctlItems._load();
                             }
                             mrow.css('min-height', 0);
                         }
@@ -620,6 +620,7 @@ var AuCardView = (function ($) {
         me.getItemsController = function () { return ctlItems; }
         me.setItemsController = function (v) {
             ctlItems = v;
+            if (ctlItems) ctlItems._setContext(me, null, mrow, null);
             me.refresh();
         }
 
@@ -650,6 +651,7 @@ var AuCardView = (function ($) {
             $('<div>').addClass('auCardView-spinner').appendTo($('<div>').appendTo(spinLayer));
 
             //ctlList = NS.ViewElement.listController(me, null, mrow, me.options.listController);
+            me.setItemsController(me.options.itemsController);
         };
 
         me.reset = function () { dirty = true; }
@@ -695,51 +697,6 @@ var AuCardView = (function ($) {
 
         var elements = {};
 
-        elements.itemControllerBase = function (owner, parent, container, options) {
-            options = options || {};
-            var me = {}, uid = uidgen(), level = 0, data, inner;
-
-            me.getUid = function () { return uid; }
-            me.getOwner = function () { return owner; }
-            me.getParent = function () { return parent; }
-            me.getContainer = function () { return container; }
-
-            //me._getInner = function () { return inner; }
-
-            //me.getLevel = function () { return level; }
-            //me._setLevel = function (v) { level = v; }
-
-            me.getData = function () { return data; }
-            me.setData = function (v) { data = v; }
-
-            me.getOptions = function () { return options; }
-            me.setOptions = function (v) { options = v || {}; }
-
-            me._build = function () {
-                inner = container;
-            }
-
-            me._update = null;
-            me.update = function () {
-                if (!inner) {
-                    //create container
-                    inner = me._build && me._build() || container;
-                }
-                if (inner) {
-                    //invoke template for projection of data-items to children
-                    me._update && me._update(inner);
-                }
-            }
-
-            me.selectionChanged = function (sel) {
-                if (owner.options.selectionBorderColor) {
-                    container.css('outline-color', sel ? owner.options.selectionBorderColor : 'transparent');
-                }
-            }
-
-            return me;
-        }
-
         elements.itemBase = function () {
             var me = {}, uid = uidgen(), owner, parent, container, data, inner;
 
@@ -755,7 +712,7 @@ var AuCardView = (function ($) {
                 owner = o;
                 parent = p;
                 container = c;
-                data = d;
+                if (d != null) data = d;
             }
 
             me.build = null;
@@ -819,7 +776,7 @@ var AuCardView = (function ($) {
             me.getColumns = function () { return columns; }
             me.setColumns = function (v) { columns = v || []; }
 
-            me._build = function (container) {
+            me.build = function (container) {
                 var tbl = $('<table>').addClass('table table-condensed').appendTo(container);
                 var th = $('<thead>').appendTo(tbl);
                 var tr = $('<tr>').appendTo(th);
@@ -837,9 +794,276 @@ var AuCardView = (function ($) {
                 return tb;
             }
 
-            me.project = null;
-            me.itemContainer = null;
-            me.template = null;
+            me.itemContainer = function () {
+                return $('<tr>');
+            };
+
+            return me;
+        }
+
+
+        elements.tableRow = function () {
+            var me = elements.itemBase(), cells = [];
+
+            me.build = function (container) {
+                var columns = me.getParent().getColumns() || [];
+                cells.length = 0;
+
+                var pselect;
+                for (var i = 0; i < columns.length; i++) {
+                    var td = $('<td>').appendTo(container);
+                    cells.push(td);
+                    if (columns[i].selection) {
+                        pselect = $('<div>').appendTo(td);
+                    }
+                }
+
+                if (pselect) {
+                    //selectable parts
+                    var mgr = me.getOwner().getSelectionController().getManager();
+                    if (mgr && mgr.maxCount() > 0) {
+                        pselect.auCheckBox();
+                        pselect.find('span').css({
+                            //'position': 'absolute',
+                            //'left': 10,
+                            //'top': 10,
+                            'font-size': '1.2em',
+                        });
+                        mgr.bindController(me, pselect);
+                    }
+                }
+                return container;
+            }
+
+            me.update = function (inner) {
+                var columns = me.getParent().getColumns() || [];
+                for (var i = 0; i < columns.length; i++) {
+                    if (columns[i].name) {
+                        cells[i].text(me.getData()[columns[i].name]);
+                    }
+                }
+            }
+
+            return me;
+        }
+
+
+        elements.panel = function () {
+
+            function update() {
+                if (collapsible !== cached.collapsible) {
+                    pxhdr.empty();
+                    if (collapsible) {
+                        $('<a>').attr({
+                            'data-toggle': 'collapse',
+                            href: '#collapse_' + me.getUid(),
+                            'aria-expanded': !!collapsed,
+                            'aria-controls': 'collapse_' + me.getUid()
+                        }).appendTo(pxhdr);
+                        pbody.parent().addClass('collapse');
+                    }
+                    else {
+                        $('<div>').appendTo(pxhdr);
+                        pbody.parent().removeClass('collapse');
+                    }
+                    cached.xheader = null;
+                    cached.collapsible = collapsible;
+                }
+
+                if (collapsed !== cached.collapsed) {
+                    if (collapsible) $('#collapse_' + me.getUid()).collapse(collapsed ? 'hide' : 'show');
+                    cached.collapsed = collapsed;
+                }
+
+                if (xheader !== cached.xheader) {
+                    var el = pxhdr.children().eq(0).empty();
+                    if (xheader) el.append(xheader);
+                    cached.xheader = xheader;
+                }
+
+                if (header !== cached.header) {
+                    var el = phdr.empty();
+                    if (header) el.append(header);
+                    cached.header = header;
+                }
+
+                if (body !== cached.body) {
+                    var el = pbody.empty();
+                    if (body) {
+                        if (body instanceof jQuery) {
+                            el.append(body);
+                        }
+                        else if (_.isObject(body)) {
+                            body._setContext(me.getOwner(), me, pbody, null);
+                            body._load();
+                        }
+                    }
+                    cached.body = body;
+                }
+                deferrer.release();
+            }
+
+            function setPanelClass(cls) {
+                var old = panel.data('cls');
+                if (cls !== old) {
+                    if (old) {
+                        panel.removeClass(old);
+                        pbody.removeClass(old);
+                    }
+                    if (cls) {
+                        panel.addClass(cls);
+                        pbody.addClass(cls);
+                    }
+                    panel.data('cls', cls);
+                }
+            }
+
+            var me = elements.itemBase();
+            var cached = {}, xheader, header, body;
+            var panel, ptitle, pbody, pselect, pxhdr, phdr;
+            var collapsible = false;
+            var collapsed = false;
+            var deferrer = Deferrer(update, 10);
+
+            me.getXHeader = function () { return xheader; }
+            me.setXHeader = function (v) {
+                xheader = v;
+                deferrer.trigger();
+            }
+
+            me.getHeader = function () { return header; }
+            me.setHeader = function (v) {
+                header = v;
+                deferrer.trigger();
+            }
+
+            me.getBody = function () { return body; }
+            me.setBody = function (v) {
+                body = v;
+                deferrer.trigger();
+            }
+
+            me.getCollapsed = function () { return collapsed; }
+            me.setCollapsed = function (v) {
+                collapsed = !!v && collapsible;
+                deferrer.trigger();
+            }
+
+            me.getCollapsible = function () { return collapsible; }
+            me.setCollapsible = function (v) {
+                collapsible = !!v;
+                collapsed = collapsed && collapsible;
+                deferrer.trigger();
+            }
+
+            me.getPanelClass = function () { return panel && panel.data('cls'); }
+            me.setPanelClass = function (v) { setPanelClass(v); }
+
+            me.build = function (container) {
+                var css_pselect = {
+                    'position': 'absolute',
+                    //'right': 15
+                    'right': 2,
+                    'width': 40,
+                    'height': 36,
+                    'margin-top': -10,
+                    'background-color': 'transparent'
+                };
+                _.merge(css_pselect, me.getOwner().options.panelSelectCSS || {});
+
+                var css_pxhdr = {
+                    'display': 'inline-block'
+                };
+                _.merge(css_pxhdr, me.getOwner().options.panelXHeaderCSS || {});
+
+                var css_phdr = {
+                    'display': 'inline-block'
+                };
+                _.merge(css_phdr, me.getOwner().options.panelHeaderCSS || {});
+
+                panel = $('<panel>').addClass('panel auCardView-card-panel').appendTo(container);
+                var hdr = $('<div>').addClass('panel-heading').appendTo(panel);
+                ptitle = $('<h4>').addClass('panel-title').appendTo(hdr);
+                pselect = $('<div>').css(css_pselect).appendTo(ptitle);
+                pxhdr = $('<div>').css(css_pxhdr).appendTo(ptitle);
+                phdr = $('<div>').css(css_phdr).appendTo(ptitle);
+
+                var exp = $('<div>').attr('id', 'collapse_' + me.getUid()).appendTo(panel);
+                pbody = $('<div>').addClass('panel-body auCardView-card-body').appendTo(exp);
+
+                setPanelClass(me.getOwner().options.panelClass || 'panel-default');
+
+                //selectable parts
+                var mgr = me.getOwner().getSelectionController().getManager();
+                if (mgr && mgr.maxCount() > 0) {
+                    pselect.auCheckBox();
+                    pselect.find('span').css({
+                        'position': 'absolute',
+                        'left': 10,
+                        'top': 10,
+                        'font-size': '1.2em',
+                    });
+                    var sp = mgr.bindController(me, pselect);
+
+                    if (me.getOwner().options.panelClickEnabled) {
+                        panel.on('click', function (e) {
+                            mgr.command('panel', sp);
+                        });
+                    }
+                }
+
+                return pbody;
+            }
+
+            me.update = function (inner) {
+                update();
+            }
+
+            return me;
+        }
+
+        /*
+        elements.itemControllerBase = function (owner, parent, container, options) {
+            options = options || {};
+            var me = {}, uid = uidgen(), level = 0, data, inner;
+
+            me.getUid = function () { return uid; }
+            me.getOwner = function () { return owner; }
+            me.getParent = function () { return parent; }
+            me.getContainer = function () { return container; }
+
+            //me._getInner = function () { return inner; }
+
+            //me.getLevel = function () { return level; }
+            //me._setLevel = function (v) { level = v; }
+
+            me.getData = function () { return data; }
+            me.setData = function (v) { data = v; }
+
+            me.getOptions = function () { return options; }
+            me.setOptions = function (v) { options = v || {}; }
+
+            me._build = function () {
+                inner = container;
+            }
+
+            me._update = null;
+            me.update = function () {
+                if (!inner) {
+                    //create container
+                    inner = me._build && me._build() || container;
+                }
+                if (inner) {
+                    //invoke template for projection of data-items to children
+                    me._update && me._update(inner);
+                }
+            }
+
+            me.selectionChanged = function (sel) {
+                if (owner.options.selectionBorderColor) {
+                    container.css('outline-color', sel ? owner.options.selectionBorderColor : 'transparent');
+                }
+            }
 
             return me;
         }
@@ -1129,7 +1353,7 @@ var AuCardView = (function ($) {
 
             return me;
         }
-
+        */
 
         return elements;
     })();
