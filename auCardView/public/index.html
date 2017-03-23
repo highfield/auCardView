@@ -34,6 +34,7 @@
                     <li><a href="#sect_constrained">Constrained</a></li>
                     <li><a href="#sect_free">Free layout</a></li>
                     <li><a href="#sect_msdl">Master/detail</a></li>
+                    <li><a href="#sect_grouping">Grouping</a></li>
                     <li><a href="#" id="btn_modal">Modal dialog</a></li>
                 </ul>
             </div>
@@ -99,11 +100,11 @@
                                     <input type="checkbox" id="card_collapsed"> Collapsed (but central Italia)
                                 </label>
                             </div>
-                            <div class="checkbox">
+                            <!--<div class="checkbox">
                                 <label>
                                     <input type="checkbox" id="card_selectable"> Selectable (but South Italia)
                                 </label>
-                            </div>
+                            </div>-->
                             <div class="checkbox">
                                 <label>
                                     <input type="checkbox" id="card_colorized"> Colorize panels
@@ -153,6 +154,18 @@
             </div>
         </section>
 
+
+        <section id="sect_grouping">
+            <h1>Grouping sample</h1>
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" id="groupby_region"> Group-by "Regione"
+                </label>
+            </div>
+            <div id="cv4" style="height:640px">
+            </div>
+        </section>
+
     </div>
 
     <script src="/libs/jquery-3.1.1.min.js"></script>
@@ -164,5 +177,6 @@
     <script src="/libs/aucardview/aucardview.js"></script>
     <script src="/js/site.js"></script>
     <script src="/js/master-detail-demo.js"></script>
+    <script src="/js/grouping-demo.js"></script>
 </body>
 </html>

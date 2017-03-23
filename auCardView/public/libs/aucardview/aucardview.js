@@ -144,7 +144,7 @@ var AuCardView = (function ($) {
                     cctr.css('display', 'none');
                 }
                 if (!!tfind) owner.reset();
-                owner.refresh();
+                owner.refresh(true);
                 tfind = null;
             }
         }
@@ -267,7 +267,7 @@ var AuCardView = (function ($) {
                     cctr.css('display', 'none');
                 }
                 owner.reset();
-                owner.refresh();
+                owner.refresh(true);
             }
         }
 
@@ -402,7 +402,7 @@ var AuCardView = (function ($) {
                     cctr.css('display', 'none');
                     bctr = pcell = null;
                 }
-                owner.refresh();
+                owner.refresh(true);
             }
         }
 
@@ -528,50 +528,60 @@ var AuCardView = (function ($) {
     function _AuCardView() {
 
         function updater(args) {
-            spinLayer.show();
-            resize();
-            mrow.css('min-height', mrow.height());
+            function release() {
+                spinLayer.hide();
+                deferrer.release();
+                resize();
+            }
 
-            var selmgr = ctlSelect.getManager();
-            if (selmgr) selmgr.command('clear');
+            try {
+                spinLayer.show();
+                resize();
+                mrow.css('min-height', mrow.height());
 
-            var params = {};
-            ctlSearch._buildParams(params);
-            ctlSort._buildParams(params);
-            ctlPage._buildParams(params, dirty);
-            dirty = false;
+                var selmgr = ctlSelect.getManager();
+                if (selmgr) selmgr.command('clear');
 
-            var action = args.action || 'get';
-            $.when(me.options.dataController[action](params, args.data))
-                .then(function (data) {
-                    //alert(data.count);
-                    spinLayer.hide();
-                    ctlSort._update(data);
-                    ctlPage._update(data);
-                    try {
-                        if (data && data.items && data.items.constructor === Array) {
-                            if (ctlItems) {
-                                ctlItems.setData(data.items);
-                                ctlItems._load();
+                var params = {};
+                ctlSearch._buildParams(params);
+                ctlSort._buildParams(params);
+                ctlPage._buildParams(params, dirty);
+                dirty = false;
+
+                var action = args.action || 'get';
+                $.when(me.options.dataController[action](params, args.data))
+                    .then(function (data) {
+                        //alert(data.count);
+                        //spinLayer.hide();
+                        ctlSort._update(data);
+                        ctlPage._update(data);
+                        try {
+                            if (data && data.items && data.items.constructor === Array) {
+                                if (ctlItems) {
+                                    ctlItems.setData(data.items);
+                                    ctlItems._load();
+                                }
+                                mrow.css('min-height', 0);
                             }
-                            mrow.css('min-height', 0);
                         }
-                    }
-                    finally {
-                        deferrer.release();
-                        if (!run1) {
-                            run1 = true;
-                            me.$elem.trigger('init');
+                        finally {
+                            release();
+                            if (!run1) {
+                                run1 = true;
+                                me.$elem.trigger('init');
+                            }
                         }
-                    }
-                },
-                function (err) {
-                    console.error(err);
-                    spinLayer.hide();
-                    mrow.css('min-height', 0);
-                    //TODO
-                    deferrer.release();
-                });
+                    },
+                    function (err) {
+                        console.error(err);
+                        mrow.css('min-height', 0);
+                        //TODO
+                        release();
+                    });
+            }
+            catch (err) {
+                release();
+            }
         }
 
 
@@ -650,7 +660,6 @@ var AuCardView = (function ($) {
             spinLayer = $('<div>').addClass('auCardView-spin-layer').appendTo(me.$elem).hide();
             $('<div>').addClass('auCardView-spinner').appendTo($('<div>').appendTo(spinLayer));
 
-            //ctlList = NS.ViewElement.listController(me, null, mrow, me.options.listController);
             me.setItemsController(me.options.itemsController);
         };
 
@@ -698,7 +707,7 @@ var AuCardView = (function ($) {
         var elements = {};
 
         elements.itemBase = function () {
-            var me = {}, uid = uidgen(), owner, parent, container, data, inner;
+            var me = {}, uid = uidgen(), owner, parent, container, data, options = {}, inner;
 
             me.getUid = function () { return uid; }
             me.getOwner = function () { return owner; }
@@ -707,6 +716,9 @@ var AuCardView = (function ($) {
 
             me.getData = function () { return data; }
             me.setData = function (v) { data = v; }
+
+            me.getOptions = function () { return options; }
+            me.setOptions = function (v) { options = v || {}; }
 
             me._setContext = function (o, p, c, d) {
                 owner = o;
@@ -729,12 +741,6 @@ var AuCardView = (function ($) {
                 }
             }
 
-            me.selectionChanged = function (sel) {
-                if (owner.options.selectionBorderColor) {
-                    container.css('outline-color', sel ? owner.options.selectionBorderColor : 'transparent');
-                }
-            }
-
             return me;
         }
 
@@ -748,7 +754,7 @@ var AuCardView = (function ($) {
 
             me.update = function (inner) {
                 dataItems = me.project && me.project(me.getData()) || me.getData();
-                if (!_.isArray(dataItems)) dataItems = [];
+                if (!$.isArray(dataItems)) dataItems = [];
 
                 controllers.length = 0;
                 var gen = generator(inner, me.itemContainer);
@@ -844,6 +850,12 @@ var AuCardView = (function ($) {
                 }
             }
 
+            me.selectionChanged = function (sel) {
+                if (me.getOptions().selectionBorderColor) {
+                    me.getContainer().css('outline-color', sel ? me.getOptions().selectionBorderColor : 'transparent');
+                }
+            }
+
             return me;
         }
 
@@ -851,6 +863,7 @@ var AuCardView = (function ($) {
         elements.panel = function () {
 
             function update() {
+                if (!panel) return;
                 if (collapsible !== cached.collapsible) {
                     pxhdr.empty();
                     if (collapsible) {
@@ -893,36 +906,31 @@ var AuCardView = (function ($) {
                         if (body instanceof jQuery) {
                             el.append(body);
                         }
-                        else if (_.isObject(body)) {
+                        else if ($.isPlainObject(body)) {
                             body._setContext(me.getOwner(), me, pbody, null);
                             body._load();
                         }
                     }
                     cached.body = body;
                 }
+
+                if (panelClass !== cached.panelClass) {
+                    if (cached.panelClass) {
+                        panel.removeClass(cached.panelClass);
+                        pbody.removeClass(cached.panelClass);
+                    }
+                    if (panelClass) {
+                        panel.addClass(panelClass);
+                        pbody.addClass(panelClass);
+                    }
+                    cached.panelClass = panelClass;
+                }
                 deferrer.release();
             }
 
-            function setPanelClass(cls) {
-                var old = panel.data('cls');
-                if (cls !== old) {
-                    if (old) {
-                        panel.removeClass(old);
-                        pbody.removeClass(old);
-                    }
-                    if (cls) {
-                        panel.addClass(cls);
-                        pbody.addClass(cls);
-                    }
-                    panel.data('cls', cls);
-                }
-            }
-
             var me = elements.itemBase();
-            var cached = {}, xheader, header, body;
+            var cached = {}, xheader, header, body, collapsible, collapsed, panelClass;
             var panel, ptitle, pbody, pselect, pxhdr, phdr;
-            var collapsible = false;
-            var collapsed = false;
             var deferrer = Deferrer(update, 10);
 
             me.getXHeader = function () { return xheader; }
@@ -956,10 +964,17 @@ var AuCardView = (function ($) {
                 deferrer.trigger();
             }
 
-            me.getPanelClass = function () { return panel && panel.data('cls'); }
-            me.setPanelClass = function (v) { setPanelClass(v); }
+            me.getPanelClass = function () { return panelClass; }
+            me.setPanelClass = function (v) {
+                panelClass = v;
+                deferrer.trigger();
+            }
 
             me.build = function (container) {
+                collapsible = !!(me.getOptions().collapsible != null ? me.getOptions().collapsible : collapsible);
+                collapsed = collapsible && !!(me.getOptions().collapsed != null ? me.getOptions().collapsed : collapsed);
+                panelClass = me.getOptions().panelClass || panelClass || 'panel-default';
+
                 var css_pselect = {
                     'position': 'absolute',
                     //'right': 15
@@ -969,17 +984,17 @@ var AuCardView = (function ($) {
                     'margin-top': -10,
                     'background-color': 'transparent'
                 };
-                _.merge(css_pselect, me.getOwner().options.panelSelectCSS || {});
+                $.extend(css_pselect, me.getOptions().panelSelectCSS || {});
 
                 var css_pxhdr = {
                     'display': 'inline-block'
                 };
-                _.merge(css_pxhdr, me.getOwner().options.panelXHeaderCSS || {});
+                $.extend(css_pxhdr, me.getOptions().panelXHeaderCSS || {});
 
                 var css_phdr = {
                     'display': 'inline-block'
                 };
-                _.merge(css_phdr, me.getOwner().options.panelHeaderCSS || {});
+                $.extend(css_phdr, me.getOptions().panelHeaderCSS || {});
 
                 panel = $('<panel>').addClass('panel auCardView-card-panel').appendTo(container);
                 var hdr = $('<div>').addClass('panel-heading').appendTo(panel);
@@ -990,8 +1005,6 @@ var AuCardView = (function ($) {
 
                 var exp = $('<div>').attr('id', 'collapse_' + me.getUid()).appendTo(panel);
                 pbody = $('<div>').addClass('panel-body auCardView-card-body').appendTo(exp);
-
-                setPanelClass(me.getOwner().options.panelClass || 'panel-default');
 
                 //selectable parts
                 var mgr = me.getOwner().getSelectionController().getManager();
@@ -1005,7 +1018,7 @@ var AuCardView = (function ($) {
                     });
                     var sp = mgr.bindController(me, pselect);
 
-                    if (me.getOwner().options.panelClickEnabled) {
+                    if (me.getOptions().panelClickEnabled) {
                         panel.on('click', function (e) {
                             mgr.command('panel', sp);
                         });
@@ -1017,6 +1030,12 @@ var AuCardView = (function ($) {
 
             me.update = function (inner) {
                 update();
+            }
+
+            me.selectionChanged = function (sel) {
+                if (me.getOptions().selectionBorderColor) {
+                    me.getContainer().css('outline-color', sel ? me.getOptions().selectionBorderColor : 'transparent');
+                }
             }
 
             return me;
@@ -1404,7 +1423,7 @@ var AuCardView = (function ($) {
             }
 
             me.getSelected = function (sel) {
-                if (_.isFunction(sel)) {
+                if ($.isFunction(sel)) {
                     proxies.forEach(function (p) {
                         if (p.getSelected()) sel(p);
                     });
@@ -1419,15 +1438,17 @@ var AuCardView = (function ($) {
             }
 
             me.setSelected = function (sel) {
-                if (_.isFunction(sel)) {
+                if ($.isFunction(sel)) {
                     proxies.forEach(function (p) {
                         p.setSelected(sel(p));
                     });
+                    me.command('update');
                 }
-                else if (_.isArray(sel)) {
+                else if ($.isArray(sel)) {
                     proxies.forEach(function (p) {
                         p.setSelected(sel.indexOf(p.getController().getData()) >= 0);
                     });
+                    me.command('update');
                 }
             }
 
@@ -1435,11 +1456,12 @@ var AuCardView = (function ($) {
                 return proxies.slice(0);
             }
 
+            me.getProxy = function (controller) {
+                return controller && map[controller.getUid()];
+            }
+
             me.getLogicalParent = function (proxy) {
-                var parent = proxy.getController().getParent().getParent();
-                if (parent) {
-                    return map[parent.getUid()];
-                }
+                return me.getProxy(proxy.getController().getParent().getParent());
             }
 
             me.bindController = function (controller, ckel) {
@@ -1536,39 +1558,73 @@ var AuCardView = (function ($) {
 
 
         managers.multimd = function () {
-            var me = managers.base(1e6);
-            me.xcommand = function (cmd, proxy) {
-                if (!proxy) return;
-                if (cmd !== 'select' && cmd !== 'unselect') return;
-                var f = cmd === 'select';
-                proxy.setSelected(f);
-
-                var controller = proxy.getController();
-                var parent = controller.getParent().getParent();
-                if (parent) {
-                    var nc = 0, ns = 0;
-                    me.getProxies().forEach(function (p) {
-                        if (p.getController().getParent().getParent() === parent) {
-                            nc++;
-                            if (p.getSelected()) ns++;
-                        }
-                    });
-
-                    var pproxy = me.getLogicalParent(proxy);
-                    if (ns === 0) {
-                        pproxy.setSelected(false);
-                    }
-                    else if (ns === nc) {
-                        pproxy.setSelected(true);
+            function update() {
+                var group = {};
+                me.getProxies().forEach(function (p) {
+                    var controller = p.getController(), pctl = controller.getParent().getParent();
+                    var pid = pctl ? pctl.getUid() : controller.getUid();
+                    var g = group[pid] = group[pid] || { nc: 0, ns: 0 };
+                    if (pctl) {
+                        g.nc++;
+                        if (p.getSelected()) g.ns++;
                     }
                     else {
-                        pproxy.setSelected(null);
+                        g.pp = p;
+                    }
+                });
+
+                for (var k in group) {
+                    var g = group[k];
+                    if (g.ns === 0) {
+                        g.pp.setSelected(false);
+                    }
+                    else if (g.ns === g.nc) {
+                        g.pp.setSelected(true);
+                    }
+                    else {
+                        g.pp.setSelected(null);
                     }
                 }
+            }
+
+            var me = managers.base(1e6);
+            me.xcommand = function (cmd, proxy) {
+                if (cmd === 'update') {
+                    update();
+                }
                 else {
-                    me.getProxies().forEach(function (p) {
-                        if (p.getController().getParent().getParent() === controller) p.setSelected(f);
-                    });
+                    if (!proxy) return;
+                    if (cmd !== 'select' && cmd !== 'unselect') return;
+                    var f = cmd === 'select';
+                    proxy.setSelected(f);
+
+                    var controller = proxy.getController();
+                    var parent = controller.getParent().getParent();
+                    if (parent) {
+                        var nc = 0, ns = 0;
+                        me.getProxies().forEach(function (p) {
+                            if (p.getController().getParent().getParent() === parent) {
+                                nc++;
+                                if (p.getSelected()) ns++;
+                            }
+                        });
+
+                        var pproxy = me.getLogicalParent(proxy);
+                        if (ns === 0) {
+                            pproxy.setSelected(false);
+                        }
+                        else if (ns === nc) {
+                            pproxy.setSelected(true);
+                        }
+                        else {
+                            pproxy.setSelected(null);
+                        }
+                    }
+                    else {
+                        me.getProxies().forEach(function (p) {
+                            if (p.getController().getParent().getParent() === controller) p.setSelected(f);
+                        });
+                    }
                 }
             }
             return me;

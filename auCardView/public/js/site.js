@@ -46,6 +46,12 @@ $(function () {
 
         me.template = function (data) {
             var vm = AuCardView.ViewElement.panel();
+            vm.setOptions({
+                panelXHeaderCSS: {
+                    'margin-left': 20
+                },
+                selectionBorderColor: 'blue'
+            });
 
             var xhdr = $('<div>');
             $('<i>').addClass('fa fa-bath').attr('aria-hidden', true).appendTo(xhdr);
@@ -63,7 +69,6 @@ $(function () {
 
             if (demoCardCollapsible) vm.setCollapsible(regionArea[data.regione] !== 'nord');
             if (demoCardCollapsed) vm.setCollapsed(regionArea[data.regione] !== 'centro');
-            if (demoCardSelectable) vm.setSelectable(regionArea[data.regione] !== 'sud');
             if (demoCardColorized) vm.setPanelClass(panelShades[Math.floor(Math.random() * panelShades.length)]);
 
             return vm;
@@ -74,26 +79,18 @@ $(function () {
 
 
     var options1 = {
-        //showSearch: true,
-        //showSort: true,
-        //showPage: true,
-        //selectionManager: 'multi',
         dataController: dataController,
-        //panelViewUpdater: panelViewUpdater,
         itemsController: TT(),
         sort: {
             active: { field: 'nome', dir: 'asc' },
             options: [
                 { field: 'nome', label: 'Nome' }
             ]
-        },
-        panelXHeaderCSS: {
-            'margin-left': 20
-        },
-        selectionBorderColor: 'blue'
+        }
     };
     $('#cv1').auCardView(options1);
     var cv1 = $('#cv1').data('auCardView');
+
 
     var options2 = {
         dataController: dataController,
@@ -103,16 +100,14 @@ $(function () {
             options: [
                 { field: 'nome', label: 'Nome' }
             ]
-        },
-        panelXHeaderCSS: {
-            'margin-left': 20
-        },
-        selectionBorderColor: 'blue'
+        }
     };
     $('#cv2').auCardView(options2);
     var cv2 = $('#cv2').data('auCardView');
 
+
     MasterDetailDemo();
+    GroupingDemo();
 
 
     $('#btn_modal').on('click', function () {
@@ -122,7 +117,7 @@ $(function () {
             showPage: true,
             selectionManager: 'multi',
             dataController: dataController,
-            panelViewUpdater: panelViewUpdater,
+            itemsController: TT(),
             sort: {
                 active: { field: 'nome', dir: 'asc' },
                 options: [
@@ -217,7 +212,7 @@ $(function () {
 
     var demoCardCollapsible = false;
     var demoCardCollapsed = false;
-    var demoCardSelectable = false;
+    //var demoCardSelectable = false;
     var demoCardColorized = false;
 
     $('#card_collapsible').on('change', function () {
@@ -234,12 +229,12 @@ $(function () {
         cv2.refresh();
     });
 
-    $('#card_selectable').on('change', function () {
-        var v = $(this).prop('checked');
-        demoCardSelectable = v;
-        cv1.refresh();
-        cv2.refresh();
-    });
+    //$('#card_selectable').on('change', function () {
+    //    var v = $(this).prop('checked');
+    //    demoCardSelectable = v;
+    //    cv1.refresh();
+    //    cv2.refresh();
+    //});
 
     $('#card_colorized').on('change', function () {
         var v = $(this).prop('checked');

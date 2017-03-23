@@ -994,6 +994,10 @@ function pager(source, query, options) {
         return (o[query.sortField] || '').toLowerCase();
     }
 
+    function fsort2(field) {
+        return o => (o[field] || '').toLowerCase();
+    }
+
     query = query || {};
     const result = { items: [] };
 
@@ -1008,7 +1012,19 @@ function pager(source, query, options) {
     }
 
     if (query.sortField && query.sortDir) {
-        partial = _.orderBy(partial, [fsort], [query.sortDir]);
+        var funcs = [], dirs = [];
+        if (_.isArray(query.sortField)) {
+            for (var i = 0; i < query.sortField.length; i++) {
+                funcs.push(fsort2(query.sortField[i]));
+                dirs.push(query.sortDir[i]);
+            }
+        }
+        else {
+            funcs.push(fsort2(query.sortField));
+            dirs.push(query.sortDir);
+        }
+        partial = _.orderBy(partial, funcs, dirs);
+        //partial = _.orderBy(partial, [fsort], [query.sortDir]);
         result.sortField = query.sortField;
         result.sortDir = query.sortDir;
     }
