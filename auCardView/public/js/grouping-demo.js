@@ -82,7 +82,7 @@ var GroupingDemo = (function ($) {
             dataController: dataController,
             //itemsController: TTable(),
             sort: {
-                active: { field: 'regione', dir: 'asc' },
+                active: { field: 'regione', dir: 'desc' },
                 options: [
                     { field: 'nome', label: 'Nome' },
                     { field: 'regione', label: 'Regione' }
