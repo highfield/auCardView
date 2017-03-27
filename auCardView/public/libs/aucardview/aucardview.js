@@ -844,8 +844,14 @@ var AuCardView = (function ($) {
             me.update = function (inner) {
                 var columns = me.getParent().getColumns() || [];
                 for (var i = 0; i < columns.length; i++) {
-                    if (columns[i].name) {
-                        cells[i].text(me.getData()[columns[i].name]);
+                    var c = columns[i];
+                    if (c.name) {
+                        if (c.updater) {
+                            c.updater(cells[i], c, me.getData());
+                        }
+                        else {
+                            cells[i].text(me.getData()[c.name]);
+                        }
                     }
                 }
             }
