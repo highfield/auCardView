@@ -115,7 +115,7 @@ $(function () {
             showSearch: true,
             showSort: true,
             showPage: true,
-            selectionManager: 'multi',
+            selectionManager: 'single',
             dataController: dataController,
             itemsController: TT(),
             sort: {
@@ -131,6 +131,16 @@ $(function () {
             height: 640
         });
         ctr.auCardView(opts);
+
+        //selection test
+        ctr.on('init', function (e) {
+            var api = ctr.data('auCardView');
+            var selmgr = api.getSelectionController().getManager();
+            selmgr.setSelected(function (p) {
+                var controller = p.getController();
+                return controller.getData().nome === 'Arezzo';
+            });
+        });
 
         BootstrapDialog.show({
             title: 'My dialog',

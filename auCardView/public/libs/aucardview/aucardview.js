@@ -1536,6 +1536,7 @@ var AuCardView = (function ($) {
         managers.single = function () {
             var me = managers.base(1);
             me.xcommand = function (cmd, proxy) {
+                if (cmd === 'update') return;
                 me.command('none');
                 if (cmd === 'panel' || cmd === 'select') {
                     proxy && proxy.setSelected(true);

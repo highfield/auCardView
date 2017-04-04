@@ -48,7 +48,7 @@
             if (sts != null && typeof sts === 'string') {
                 changed = sts !== status;
                 status = sts;
-                if (changed) console.log(status)
+                //if (changed) console.log(status)
             }
 
             var cls, opacity = 0.65, color = 'black';
