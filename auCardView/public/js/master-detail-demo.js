@@ -80,7 +80,12 @@ var MasterDetailDemo = (function ($) {
         ]);
 
         me.template = function (data) {
-            return AuCardView.ViewElement.tableRow();
+            var vm = AuCardView.ViewElement.tableRow();
+            vm.setOptions({
+                selkey: data.id,
+                selectionBorderColor: 'pink'
+            });
+            return vm;
         }
 
         return me;
@@ -92,6 +97,14 @@ var MasterDetailDemo = (function ($) {
 
         me.template = function (data) {
             var vm = AuCardView.ViewElement.panel();
+            vm.setOptions({
+                selkey: data.id,
+                panelXHeaderCSS: {
+                    'margin-left': 20
+                },
+                selectionBorderColor: 'pink',
+                panelClickEnabled: true
+            });
 
             var xhdr = $('<div>');
             $('<span>').text(data.nome).appendTo(xhdr);
@@ -126,10 +139,10 @@ var MasterDetailDemo = (function ($) {
                     { field: 'nome', label: 'Nome' }
                 ]
             },
-            panelXHeaderCSS: {
-                'margin-left': 20
-            },
-            selectionBorderColor: 'pink'
+            //panelXHeaderCSS: {
+            //    'margin-left': 20
+            //},
+            //selectionBorderColor: 'pink'
         };
         $('#cv3').auCardView(options3);
         cv3 = $('#cv3').data('auCardView');
@@ -142,7 +155,7 @@ var MasterDetailDemo = (function ($) {
                     log.push('selected=(none)');
                     break;
                 case 1:
-                    log.push('selected=' + e.selected[0].nome);
+                    log.push('selected=' + e.selected[0]);
                     break;
                 default:
                     log.push('selected=(' + e.selected.length + ' items)');
@@ -154,33 +167,45 @@ var MasterDetailDemo = (function ($) {
 
         //selection test
         $('#cv3').on('init', function (e) {
-            var reg1 = "Lombardia", reg2 = "Lazio";
-            var selmgr = cv3.getSelectionController().getManager();
-            selmgr.setSelected(function (p) {
-                var controller = p.getController(), pp = selmgr.getLogicalParent(p);
-                if (pp) {
-                    var pctl = pp.getController();
-                    return controller.getData().nome[0] === 'P' || pctl.getData().nome === reg1 || pctl.getData().nome === reg2;
-                }
-                else {
-                    return controller.getData().nome === reg1 || controller.getData().nome === reg2;
-                }
-            });
+            //var reg1 = "Lombardia", reg2 = "Lazio";
+            //var selmgr = cv3.getSelectionController().getManager();
+            //selmgr.setSelected(function (p) {
+            //    var controller = p.getController(), pp = selmgr.getLogicalParent(p);
+            //    if (pp) {
+            //        var pctl = pp.getController();
+            //        return controller.getData().nome[0] === 'P' || pctl.getData().nome === reg1 || pctl.getData().nome === reg2;
+            //    }
+            //    else {
+            //        return controller.getData().nome === reg1 || controller.getData().nome === reg2;
+            //    }
+            //});
         });
 
         $('#bmdsel1').on('click', function () {
             var reg = "Veneto";
-            var selmgr = cv3.getSelectionController().getManager();
-            selmgr.setSelected(function (p) {
-                var controller = p.getController(), pp = selmgr.getLogicalParent(p);
-                if (pp) {
-                    var pctl = pp.getController();
-                    return controller.getData().nome[0] === 'A' || pctl.getData().nome === reg;
-                }
-                else {
-                    return controller.getData().nome === reg;
-                }
+
+            var sel = {};
+            cv3.getItemsController().getControllers().forEach(function (cr) {
+                cr.getBody().getControllers().forEach(function (cc) {
+                    if (cr.getData().nome === reg || cc.getData().nome[0] === 'A') {
+                        sel[cc.getOptions().selkey] = 1;
+                    }
+                });
             });
+
+            cv3.getSelectionManager().setSelected(sel, true);
+            //var reg = "Veneto";
+            //var selmgr = cv3.getSelectionController().getManager();
+            //selmgr.setSelected(function (p) {
+            //    var controller = p.getController(), pp = selmgr.getLogicalParent(p);
+            //    if (pp) {
+            //        var pctl = pp.getController();
+            //        return controller.getData().nome[0] === 'A' || pctl.getData().nome === reg;
+            //    }
+            //    else {
+            //        return controller.getData().nome === reg;
+            //    }
+            //});
         });
     }
 

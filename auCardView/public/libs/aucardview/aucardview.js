@@ -443,6 +443,71 @@ var AuCardView = (function ($) {
     }
 
 
+    function selectionToolbarController(owner, row) {
+
+        function build() {
+            var bcell = $('<div>').addClass('auCardView-toolbar-cell-content').appendTo(cctr);
+            btn = $('<button>').addClass('btn btn-default').attr({ 'type': 'button' }).appendTo(bcell);
+            $('<span>').attr('aria-hidden', true).appendTo(btn);
+            btn.on('click', select);
+        }
+
+        function update() {
+            if (btn) {
+                var cls = (reqaction === 'all') ? 'glyphicon glyphicon-check' : 'glyphicon glyphicon-unchecked';
+                btn.children('span').attr('class', cls);
+            }
+        }
+
+        function select() {
+            var v = reqaction === 'all';
+            owner.getSelectionManager().command(reqaction);
+            reqaction = v ? 'none' : 'all';
+            update();
+        }
+
+        var me = {}, vis = false, btn, reqaction = 'all';
+        var cctr = $('<div>').addClass('auCardView-toolbar-cell').appendTo(row);
+
+        me.getVisible = function () { return vis; }
+        me.setVisible = function (v) {
+            v = !!v;
+            if (vis !== v) {
+                vis = v;
+                if (vis) {
+                    cctr.css('display', '');
+                    build();
+                    update();
+                }
+                else {
+                    cctr.empty();
+                    cctr.css('display', 'none');
+                    btn = null;
+                }
+                owner.refresh();
+            }
+        }
+
+        me._measure = function () {
+            return vis ? cctr.width() : 0;
+        }
+
+        me._arrange = function (l, r) {
+            if (l == null) {
+                cctr.css({ right: r });
+            }
+            else if (r == null) {
+                cctr.css({ left: l });
+            }
+            else {
+                cctr.css({ left: l, width: r - l });
+            }
+        }
+
+        return me;
+    }
+
+    /*
     function selectionController(owner, row) {
 
         function build() {
@@ -523,7 +588,7 @@ var AuCardView = (function ($) {
 
         return me;
     }
-
+    */
 
     function _AuCardView() {
 
@@ -539,14 +604,24 @@ var AuCardView = (function ($) {
                 resize();
                 mrow.css('min-height', mrow.height());
 
-                var selmgr = ctlSelect.getManager();
-                if (selmgr) selmgr.command('clear');
-
                 var params = {};
                 ctlSearch._buildParams(params);
                 ctlSort._buildParams(params);
                 ctlPage._buildParams(params, dirty);
                 dirty = false;
+
+                //var selmgr = ctlSelect.getManager();
+                //if (selmgr) selmgr.command('clear');
+                if (ctlSelMng) {
+                    if (ctlSelMng.maxCount() > 1 && ctlPage.getVisible()) {
+                        throw new Error('Cannot use multiple-selection together with the pagination.');
+                    }
+                    ctlSelMng._clearBindings();
+                    var sl = ctlSelMng.getSelected();
+                    if (sl.length && typeof sl[0] === 'string') {
+                        params.selected = sl[0];
+                    }
+                }
 
                 var action = args.action || 'get';
                 $.when(me.options.dataController[action](params, args.data))
@@ -556,7 +631,7 @@ var AuCardView = (function ($) {
                         ctlSort._update(data);
                         ctlPage._update(data);
                         try {
-                            if (data && data.items && data.items.constructor === Array) {
+                            if (data && $.isArray(data.items)) {
                                 if (ctlItems) {
                                     ctlItems.setData(data.items);
                                     ctlItems._load();
@@ -565,6 +640,7 @@ var AuCardView = (function ($) {
                             }
                         }
                         finally {
+                            if (ctlSelMng) ctlSelMng._updateBindings();
                             release();
                             if (!run1) {
                                 run1 = true;
@@ -575,11 +651,13 @@ var AuCardView = (function ($) {
                     function (err) {
                         console.error(err);
                         mrow.css('min-height', 0);
-                        //TODO
+                        //TODO notify error
                         release();
                     });
             }
             catch (err) {
+                console.error(err);
+                //TODO notify error
                 release();
             }
         }
@@ -591,11 +669,11 @@ var AuCardView = (function ($) {
 
             //header
             var l = 0, r = 0;
-            var wl = ctlSelect._measure();
+            var wl = ctlSelTbar._measure();
             var ws = ctlSearch._measure();
             var wr = ctlSort._measure();
             if (wl) {
-                ctlSelect._arrange(l, null);
+                ctlSelTbar._arrange(l, null);
                 l += wl + margin;
             }
             if (ws) {
@@ -619,13 +697,24 @@ var AuCardView = (function ($) {
 
         $(window).on('resize', resize);
 
-        var me = {}, ctlItems, ctlSearch, ctlSort, ctlPage, ctlSelect, hrow, mrow, frow, dirty = true, run1, panels = [], spinLayer;
+        var me = {}, ctlItems, ctlSearch, ctlSort, ctlPage, ctlSelTbar, ctlSelMng; // ctlSelect;
+        var hrow, mrow, frow, dirty = true, run1, panels = [], spinLayer;
         var deferrer = Deferrer(updater, 200);
 
         me.getSearchController = function () { return ctlSearch; }
         me.getSortController = function () { return ctlSort; }
         me.getPageController = function () { return ctlPage; }
-        me.getSelectionController = function () { return ctlSelect; }
+        //me.getSelectionController = function () { return ctlSelect; }
+
+        me.getSelectionManager = function () { return ctlSelMng; }
+        me.setSelectionManager = function (v) {
+            if (typeof v === 'string') {
+                v = NS.SelectionManager[v](me);
+            }
+            ctlSelMng = v;
+            ctlSelTbar.setVisible(ctlSelMng && ctlSelMng.maxCount() > 1);
+            me.refresh();
+        }
 
         me.getItemsController = function () { return ctlItems; }
         me.setItemsController = function (v) {
@@ -642,8 +731,11 @@ var AuCardView = (function ($) {
             var mainctr = $("<div>").addClass('container-fluid auCardView-container').appendTo(me.$elem);
 
             hrow = $('<div>').addClass('row auCardView-header').appendTo(mainctr);
-            ctlSelect = selectionController(me, hrow);
-            ctlSelect.setManager(me.options.selectionManager);
+            ctlSelTbar = selectionToolbarController(me, hrow);
+            //ctlSelect = selectionController(me, hrow);
+            //ctlSelect.setManager(me.options.selectionManager);
+
+            me.setSelectionManager(me.options.selectionManager);
 
             ctlSearch = searchController(me, hrow);
             ctlSearch.setVisible(me.options.showSearch);
@@ -741,6 +833,12 @@ var AuCardView = (function ($) {
                 }
             }
 
+            me._intoView = function () {
+                //see: http://stackoverflow.com/questions/11039885/scrollintoview-causing-the-whole-page-to-move
+                var box = container.closest('.auCardView-body');
+                box[0].scrollTop = container[0].offsetTop;
+            }
+
             return me;
         }
 
@@ -751,6 +849,10 @@ var AuCardView = (function ($) {
             me.project = null;
             me.itemContainer = null;
             me.template = null;
+
+            me.getControllers = function () {
+                return controllers.slice(0);
+            }
 
             me.update = function (inner) {
                 dataItems = me.project && me.project(me.getData()) || me.getData();
@@ -826,16 +928,40 @@ var AuCardView = (function ($) {
 
                 if (pselect) {
                     //selectable parts
-                    var mgr = me.getOwner().getSelectionController().getManager();
+                    var mgr = me.getOwner().getSelectionManager();
+                    //var mgr = me.getOwner().getSelectionController().getManager();
                     if (mgr && mgr.maxCount() > 0) {
                         pselect.auCheckBox();
+                        var chkapi = pselect.data('auCheckBox');
                         pselect.find('span').css({
                             //'position': 'absolute',
                             //'left': 10,
                             //'top': 10,
                             'font-size': '1.2em',
                         });
-                        mgr.bindController(me, pselect);
+                        //mgr.bindController(me, pselect);
+
+                        if (chkapi) {
+                            var sp = mgr._bind(me, function (sel) {
+                                if (sel === null) {
+                                    chkapi.setStatus('indeterminate');
+                                }
+                                else {
+                                    chkapi.setStatus(sel ? 'checked' : 'unchecked');
+                                }
+                                me.selectionChanged(sel);
+                            });
+                            if (sp) {
+                                pselect.on('click', function (e) {
+                                    e.stopPropagation();
+                                    switch (chkapi.getStatus()) {
+                                        case 'checked': mgr.command('select', sp); break;
+                                        case 'unchecked': mgr.command('unselect', sp); break;
+                                        case 'indeterminate': mgr.command('indeterminate', sp); break;
+                                    }
+                                });
+                            }
+                        }
                     }
                 }
                 return container;
@@ -1013,21 +1139,45 @@ var AuCardView = (function ($) {
                 pbody = $('<div>').addClass('panel-body auCardView-card-body').appendTo(exp);
 
                 //selectable parts
-                var mgr = me.getOwner().getSelectionController().getManager();
+                var mgr = me.getOwner().getSelectionManager();
+                //var mgr = me.getOwner().getSelectionController().getManager();
                 if (mgr && mgr.maxCount() > 0) {
                     pselect.auCheckBox();
+                    var chkapi = pselect.data('auCheckBox');
                     pselect.find('span').css({
                         'position': 'absolute',
                         'left': 10,
                         'top': 10,
                         'font-size': '1.2em',
                     });
-                    var sp = mgr.bindController(me, pselect);
 
-                    if (me.getOptions().panelClickEnabled) {
-                        panel.on('click', function (e) {
-                            mgr.command('panel', sp);
+                    if (chkapi) {
+                        //var sp = mgr.bindController(me, pselect);
+                        var sp = mgr._bind(me, function (sel) {
+                            if (sel === null) {
+                                chkapi.setStatus('indeterminate');
+                            }
+                            else {
+                                chkapi.setStatus(sel ? 'checked' : 'unchecked');
+                            }
+                            me.selectionChanged(sel);
                         });
+                        if (sp) {
+                            pselect.on('click', function (e) {
+                                e.stopPropagation();
+                                switch (chkapi.getStatus()) {
+                                    case 'checked': mgr.command('select', sp); break;
+                                    case 'unchecked': mgr.command('unselect', sp); break;
+                                    case 'indeterminate': mgr.command('indeterminate', sp); break;
+                                }
+                            });
+
+                            if (me.getOptions().panelClickEnabled) {
+                                panel.on('click', function (e) {
+                                    mgr.command('panel', sp);
+                                });
+                            }
+                        }
                     }
                 }
 
@@ -1047,339 +1197,6 @@ var AuCardView = (function ($) {
             return me;
         }
 
-        /*
-        elements.itemControllerBase = function (owner, parent, container, options) {
-            options = options || {};
-            var me = {}, uid = uidgen(), level = 0, data, inner;
-
-            me.getUid = function () { return uid; }
-            me.getOwner = function () { return owner; }
-            me.getParent = function () { return parent; }
-            me.getContainer = function () { return container; }
-
-            //me._getInner = function () { return inner; }
-
-            //me.getLevel = function () { return level; }
-            //me._setLevel = function (v) { level = v; }
-
-            me.getData = function () { return data; }
-            me.setData = function (v) { data = v; }
-
-            me.getOptions = function () { return options; }
-            me.setOptions = function (v) { options = v || {}; }
-
-            me._build = function () {
-                inner = container;
-            }
-
-            me._update = null;
-            me.update = function () {
-                if (!inner) {
-                    //create container
-                    inner = me._build && me._build() || container;
-                }
-                if (inner) {
-                    //invoke template for projection of data-items to children
-                    me._update && me._update(inner);
-                }
-            }
-
-            me.selectionChanged = function (sel) {
-                if (owner.options.selectionBorderColor) {
-                    container.css('outline-color', sel ? owner.options.selectionBorderColor : 'transparent');
-                }
-            }
-
-            return me;
-        }
-
-        elements.listController = function (owner, parent, container, options) {
-            var me = elements.itemControllerBase(owner, parent, container, options);
-            //if (parent) me._setLevel(parent.getLevel() + 1);
-
-            me._update = function (inner) {
-                var opts = me.getOptions();
-                var gen = generator(inner);
-                var controllers = opts.updater && opts.updater(owner, me, gen);
-                var children = gen.close();
-
-                if (!_.isArray(controllers)) controllers = [];
-                for (var i = 0; i < controllers.length; i++) {
-                    children[i].data('controller', controllers[i]);
-                    //controllers[i]._setLevel(me.getLevel());
-                    controllers[i].update();
-                }
-            }
-
-            return me;
-        }
-
-
-        elements.tableController = function (owner, parent, container, options) {
-            var me = elements.itemControllerBase(owner, parent, container, options);
-            //if (parent) me._setLevel(parent.getLevel() + 1);
-
-            me._build = function () {
-                var columns = me.getOptions().columns || [];
-
-                var tbl = $('<table>').addClass('table table-condensed').appendTo(container);
-                var th = $('<thead>').appendTo(tbl);
-                var tr = $('<tr>').appendTo(th);
-                for (var i = 0; i < columns.length; i++) {
-                    var th = $('<th>').appendTo(tr);
-                    if (columns[i].selection) {
-                        th.attr('width', 40);
-                    }
-                    else {
-                        if (columns[i].width) th.attr('width', columns[i].width);
-                        th.text(columns[i].title || columns[i].name);
-                    }
-                }
-                var tb = $('<tbody>').appendTo(tbl);
-                return tb;
-            }
-
-            me._update = function (inner) {
-                var opts = me.getOptions();
-                var gen = generator(inner, function () {
-                    return $('<tr>');
-                });
-                var controllers = opts.updater && opts.updater(owner, me, gen);
-                var children = gen.close();
-
-                if (!_.isArray(controllers)) controllers = [];
-                for (var i = 0; i < controllers.length; i++) {
-                    children[i].data('controller', controllers[i]);
-                    //controllers[i]._setLevel(me.getLevel());
-                    controllers[i].update();
-                }
-            }
-
-            return me;
-        }
-
-
-        elements.tableRowController = function (owner, parent, container, options) {
-            var me = elements.itemControllerBase(owner, parent, container, options);
-            var cells = [];
-
-            me._build = function () {
-                var columns = parent.getOptions().columns || [];
-                cells.length = 0;
-
-                var pselect;
-                for (var i = 0; i < columns.length; i++) {
-                    var td = $('<td>').appendTo(container);
-                    cells.push(td);
-                    if (columns[i].selection) {
-                        pselect = $('<div>').appendTo(td);
-                    }
-                }
-
-                if (pselect) {
-                    //selectable parts
-                    var mgr = owner.getSelectionController().getManager();
-                    if (mgr && mgr.maxCount() > 0) {
-                        pselect.auCheckBox();
-                        pselect.find('span').css({
-                            //'position': 'absolute',
-                            //'left': 10,
-                            //'top': 10,
-                            'font-size': '1.2em',
-                        });
-                        mgr.bindController(me, pselect);
-                    }
-                }
-                return container;
-            }
-
-            me._update = function (inner) {
-                var columns = parent.getOptions().columns || [];
-                for (var i = 0; i < columns.length; i++) {
-                    if (columns[i].name) {
-                        cells[i].text(me.getData()[columns[i].name]);
-                    }
-                }
-            }
-
-            return me;
-        }
-
-
-        elements.panelController = function (owner, parent, container, options) {
-
-            function update() {
-                if (collapsible !== cached.collapsible) {
-                    pxhdr.empty();
-                    if (collapsible) {
-                        $('<a>').attr({
-                            'data-toggle': 'collapse',
-                            href: '#collapse_' + me.getUid(),
-                            'aria-expanded': !!collapsed,
-                            'aria-controls': 'collapse_' + me.getUid()
-                        }).appendTo(pxhdr);
-                        pbody.parent().addClass('collapse');
-                    }
-                    else {
-                        $('<div>').appendTo(pxhdr);
-                        pbody.parent().removeClass('collapse');
-                    }
-                    cached.xheader = null;
-                    cached.collapsible = collapsible;
-                }
-
-                if (collapsed !== cached.collapsed) {
-                    if (collapsible) $('#collapse_' + me.getUid()).collapse(collapsed ? 'hide' : 'show');
-                    cached.collapsed = collapsed;
-                }
-
-                if (xheader !== cached.xheader) {
-                    var el = pxhdr.children().eq(0).empty();
-                    if (xheader) el.append(xheader);
-                    cached.xheader = xheader;
-                }
-
-                if (header !== cached.header) {
-                    var el = phdr.empty();
-                    if (header) el.append(header);
-                    cached.header = header;
-                }
-
-                if (body !== cached.body) {
-                    var el = pbody.empty();
-                    if (body) {
-                        if (body instanceof jQuery) {
-                            el.append(body);
-                        }
-                        else if (_.isObject(body)) {
-                            el.append(body.getContainer());
-                            body.update();
-                        }
-                    }
-                    cached.body = body;
-                }
-                deferrer.release();
-            }
-
-            function setPanelClass(cls) {
-                var old = panel.data('cls');
-                if (cls !== old) {
-                    if (old) {
-                        panel.removeClass(old);
-                        pbody.removeClass(old);
-                    }
-                    if (cls) {
-                        panel.addClass(cls);
-                        pbody.addClass(cls);
-                    }
-                    panel.data('cls', cls);
-                }
-            }
-
-            var me = elements.itemControllerBase(owner, parent, container, options);
-
-            var cached = {}, xheader, header, body;
-            var panel, ptitle, pbody, pselect, pxhdr, phdr;
-            var collapsible = owner.options.collapsible != null ? !!owner.options.collapsible : false;
-            var collapsed = owner.options.collapsed != null ? !!owner.options.collapsed : false;
-            var deferrer = Deferrer(update, 10);
-
-            me.getXHeader = function () { return xheader; }
-            me.setXHeader = function (v) {
-                xheader = v;
-                deferrer.trigger();
-            }
-
-            me.getHeader = function () { return header; }
-            me.setHeader = function (v) {
-                header = v;
-                deferrer.trigger();
-            }
-
-            me.getBody = function () { return body; }
-            me.setBody = function (v) {
-                body = v;
-                deferrer.trigger();
-            }
-
-            me.getCollapsed = function () { return collapsed; }
-            me.setCollapsed = function (v) {
-                collapsed = !!v && collapsible;
-                deferrer.trigger();
-            }
-
-            me.getCollapsible = function () { return collapsible; }
-            me.setCollapsible = function (v) {
-                collapsible = !!v;
-                collapsed = collapsed && collapsible;
-                deferrer.trigger();
-            }
-
-            me.getPanelClass = function () { return panel && panel.data('cls'); }
-            me.setPanelClass = function (v) { setPanelClass(v); }
-
-            me._build = function () {
-                var css_pselect = {
-                    'position': 'absolute',
-                    //'right': 15
-                    'right': 2,
-                    'width': 40,
-                    'height': 36,
-                    'margin-top': -10,
-                    'background-color': 'transparent'
-                };
-                _.merge(css_pselect, owner.options.panelSelectCSS || {});
-
-                var css_pxhdr = {
-                    'display': 'inline-block'
-                };
-                _.merge(css_pxhdr, owner.options.panelXHeaderCSS || {});
-
-                var css_phdr = {
-                    'display': 'inline-block'
-                };
-                _.merge(css_phdr, owner.options.panelHeaderCSS || {});
-
-                panel = $('<panel>').addClass('panel auCardView-card-panel').appendTo(container);
-                var hdr = $('<div>').addClass('panel-heading').appendTo(panel);
-                ptitle = $('<h4>').addClass('panel-title').appendTo(hdr);
-                pselect = $('<div>').css(css_pselect).appendTo(ptitle);
-                pxhdr = $('<div>').css(css_pxhdr).appendTo(ptitle);
-                phdr = $('<div>').css(css_phdr).appendTo(ptitle);
-
-                var exp = $('<div>').attr('id', 'collapse_' + me.getUid()).appendTo(panel);
-                pbody = $('<div>').addClass('panel-body auCardView-card-body').appendTo(exp);
-
-                setPanelClass(owner.options.panelClass || 'panel-default');
-
-                //selectable parts
-                var mgr = owner.getSelectionController().getManager();
-                if (mgr && mgr.maxCount() > 0) {
-                    pselect.auCheckBox();
-                    pselect.find('span').css({
-                        'position': 'absolute',
-                        'left': 10,
-                        'top': 10,
-                        'font-size': '1.2em',
-                    });
-                    var sp = mgr.bindController(me, pselect);
-
-                    if (owner.options.panelClickEnabled) {
-                        panel.on('click', function (e) {
-                            mgr.command('panel', sp);
-                        });
-                    }
-                }
-            }
-
-            me._update = function (inner) {
-                update();
-            }
-
-            return me;
-        }
-        */
-
         return elements;
     })();
 
@@ -1389,6 +1206,440 @@ var AuCardView = (function ($) {
 
         var managers = {};
 
+        managers.base = function (owner, Nmax) {
+
+            function SelProxy(controller, cb) {
+                var sp = {}, sel = false, old = false;
+                sp.getController = function () { return controller; }
+                sp.getKey = function () { return controller.getOptions().selkey; }
+                sp.getSel = function () { return sel; }
+                sp.setSel = function (v) {
+                    if (sel !== v) {
+                        sel = v;
+                        cb && cb(sel);
+                        sp.change && sp.change(sel);
+                    }
+                }
+                //sp.getIndeterminate = function () { return sel == null; }
+                //sp.getSelected = function () { return sel; }
+                //sp.setSelected = function (v) {
+                //    if (sel !== v) {
+                //        sel = v;
+                //        cb && cb(sel);
+                //        sp.change && sp.change(sel);
+                //        me._notifyChange();
+                //    }
+                //}
+
+                //sp.hasChanged = function () {
+                //    var f = sel !== old;
+                //    old = sel;
+                //    return f;
+                //}
+
+                sp._start = function () {
+                    cb && cb(sel);
+                }
+
+                sp.change = null;
+                sp.dispose = function () { }
+                return sp;
+            }
+
+            function considerRaiseEvent() {
+                deferrer.release();
+                if (selchg) {
+                    var event = $.Event("selection");
+                    event.manager = me;
+                    event.selected = me.getSelected();
+                    owner.$elem.trigger(event);
+                }
+                selchg = false;
+                if (intoViewKey) {
+                    proxies[intoViewKey] && proxies[intoViewKey].getController()._intoView();
+                }
+                intoViewKey = null;
+            }
+
+            var me = {}, selected = {}, proxies = {}, selchg = false, intoViewKey;
+            var deferrer = Deferrer(considerRaiseEvent, 100);
+
+            me.maxCount = function () { return Nmax; }
+            me.getProxies = function () { return proxies; }
+
+            me.getSelected = function () { return Object.keys(selected); }
+            me.setSelected = function (v, refresh) {
+                if (v !== selected) {
+                    selected = {};
+                    me._setSelectedCore(v).forEach(function (s) {
+                        selected[s] = 1;
+                    });
+                }
+                selchg = true;
+                deferrer.release();
+                deferrer.trigger();
+                if (refresh) {
+                    intoViewKey = null;
+                    owner.refresh();
+                }
+            }
+            me._setSelectedCore = function (v) { return []; }
+
+            //me.hasChanged = function () {
+            //    var chg = false;
+            //    proxies.forEach(function (p) {
+            //        if (p.hasChanged()) chg = true;
+            //    });
+            //    return chg;
+            //}
+
+            //me._notifyChange = function () {
+            //    deferrer.release();
+            //    deferrer.trigger();
+            //}
+
+            me._clearBindings = function () {
+                proxies = {};
+                me._clearBindingsCore();
+            }
+            me._clearBindingsCore = $.noop;
+
+            me._updateBindings = function () {
+                Object.keys(selected).forEach(function (s) {
+                    if (!proxies[s]) {
+                        delete selected[s];
+                        selchg = true;
+                    }
+                });
+                intoViewKey = me._updateBindingsCore(proxies, selected);
+                deferrer.release();
+                deferrer.trigger();
+            }
+            me._updateBindingsCore = $.noop;
+
+            me._bind = function (controller, cb) {
+                var proxy = SelProxy(controller, cb);
+                var hash = proxy.getKey();
+                if (hash) {
+                    proxies[hash] = proxy;
+                    proxy._start();
+                    me._bindCore(proxy);
+                    return proxy;
+                }
+            }
+            me._bindCore = $.noop;
+
+            me.command = function (cmd, proxy) {
+                switch (cmd) {
+                    case 'clear':
+                    case 'none':
+                        selected = {};
+                        for (var k in proxies) {
+                            proxies[k].setSel(false);
+                        }
+                        me.setSelected(selected);
+                        break;
+
+                    case 'all':
+                        selected = {};
+                        for (var k in proxies) {
+                            selected[k] = 1;
+                            proxies[k].setSel(true);
+                        }
+                        me.setSelected(selected);
+                        break;
+
+                    default:
+                        var fn = me._xcommand(cmd, proxy);
+                        fn && me.setSelected(fn(proxies, selected));
+                }
+            }
+            me._xcommand = $.noop;
+
+            return me;
+        }
+
+
+        managers.none = function (owner) {
+            var me = managers.base(owner, 0);
+            return me;
+        }
+
+
+        managers.single = function (owner) {
+            var me = managers.base(owner, 1);
+            me._setSelectedCore = function (v) {
+                if (v == null) return [];
+                if ($.isArray(v)) return v.slice(0, 1);
+                if ($.isPlainObject(v)) return Object.keys(v).slice(0, 1);
+                return [v];
+            }
+            me._updateBindingsCore = function (proxies, selected) {
+                var keys = Object.keys(selected);
+                if (keys.length) {
+                    var p = proxies[keys[0]];
+                    p.setSel(true);
+                    return keys[0];
+                }
+            }
+            me._xcommand = function (cmd, proxy) {
+                switch (cmd) {
+                    case 'panel':
+                    case 'select':
+                        return function (proxies, selected) {
+                            for (var k in proxies) {
+                                var p = proxies[k];
+                                p.setSel(p === proxy);
+                            }
+                            return [proxy.getKey()];
+                        };
+
+                    case 'unselect':
+                        return function (proxies, selected) {
+                            for (var k in proxies) {
+                                proxies[k].setSel(false);
+                            }
+                            return [];
+                        };
+                }
+            }
+            return me;
+        }
+
+
+        managers.multi = function (owner) {
+            var me = managers.base(owner, 1e6);
+            me._setSelectedCore = function (v) {
+                if (v == null) return [];
+                if ($.isArray(v)) return v.slice(0);
+                if ($.isPlainObject(v)) return Object.keys(v).slice(0);
+                return [v];
+            }
+            me._updateBindingsCore = function (proxies, selected) {
+                var kk;
+                for (var k in selected) {
+                    proxies[k].setSel(true);
+                    kk = kk || k;
+                }
+                return kk;
+            }
+            me._xcommand = function (cmd, proxy) {
+                switch (cmd) {
+                    case 'panel':
+                        return function (proxies, selected) {
+                            for (var k in proxies) {
+                                var p = proxies[k];
+                                p.setSel(p === proxy);
+                            }
+                            return [proxy.getKey()];
+                        };
+
+                    case 'select':
+                        return function (proxies, selected) {
+                            proxy.setSel(true);
+                            selected[proxy.getKey()] = 1;
+                            return selected;
+                        };
+
+                    case 'unselect':
+                        return function (proxies, selected) {
+                            proxy.setSel(false);
+                            delete selected[proxy.getKey()];
+                            return selected;
+                        };
+                }
+            }
+            return me;
+        }
+
+
+        managers.multimd = function (owner) {
+            //function update() {
+            //    var group = {};
+            //    me.getProxies().forEach(function (p) {
+            //        var controller = p.getController(), pctl = controller.getParent().getParent();
+            //        var pid = pctl ? pctl.getUid() : controller.getUid();
+            //        var g = group[pid] = group[pid] || { nc: 0, ns: 0 };
+            //        if (pctl) {
+            //            g.nc++;
+            //            if (p.getSelected()) g.ns++;
+            //        }
+            //        else {
+            //            g.pp = p;
+            //        }
+            //    });
+
+            //    for (var k in group) {
+            //        var g = group[k];
+            //        if (g.ns === 0) {
+            //            g.pp.setSelected(false);
+            //        }
+            //        else if (g.ns === g.nc) {
+            //            g.pp.setSelected(true);
+            //        }
+            //        else {
+            //            g.pp.setSelected(null);
+            //        }
+            //    }
+            //}
+            function bindBidi(master) {
+                function cchange(sel) {
+                    var n = 0;
+                    children.forEach(function (c) {
+                        if (c.getSel()) n++;
+                    });
+                    if (n === 0) {
+                        master.setSel(false);
+                    }
+                    else if (n === children.length) {
+                        master.setSel(true);
+                    }
+                    else {
+                        master.setSel(null);
+                    }
+                }
+
+                function mchange(sel) {
+                    if (sel === null) return;
+                    children.forEach(function (c) {
+                        c.setSel(sel);
+                    });
+                }
+                master.change = mchange;
+
+                var bb = {}, children = [], mkey = master.getKey();
+                bb.getKey = function () { return mkey; }
+                bb.bind = function (child) {
+                    child.change = cchange;
+                    children.push(child);
+                }
+                bb.setSel = function (v, sel) {
+                    master.setSel(v);
+                    children.forEach(function (c) {
+                        if (v) {
+                            sel[c.getKey()] = 1;
+                        }
+                        else {
+                            delete sel[c.getKey()];
+                        }
+                    });
+                }
+                return bb;
+            }
+
+            var me = managers.base(owner, 1e6), masterProxies = {};
+            me._setSelectedCore = function (v) {
+                if (v == null) return [];
+                if ($.isArray(v)) return v.slice(0);
+                if ($.isPlainObject(v)) return Object.keys(v).slice(0);
+                return [v];
+            }
+            me._updateBindingsCore = function (proxies, selected) {
+                var kk;
+                for (var k in selected) {
+                    proxies[k].setSel(true);
+                    kk = kk || k;
+                }
+                return kk;
+            }
+            me._clearBindingsCore = function () {
+                masterProxies = {};
+            }
+            me._bindCore = function (proxy) {
+                var pc = proxy.getController().getParent().getParent();
+                if (pc) {
+                    masterProxies[pc.getOptions().selkey].bind(proxy);
+                }
+                else {
+                    masterProxies[proxy.getKey()] = bindBidi(proxy);
+                }
+            }
+            me._xcommand = function (cmd, proxy) {
+                switch (cmd) {
+                    case 'panel':
+                        return function (proxies, selected) {
+                            var sel = {};
+                            for (var k in masterProxies) {
+                                masterProxies[k].setSel(k === proxy.getKey(), sel);
+                            }
+                            //var mp = masterProxies[proxy.getKey()];
+                            //masterProxies[proxy.getKey()].forEach(function (p) {
+                            //    p.setSel(true);
+                            //    sel[p.getKey()] = 1;
+                            //});
+                            return sel;
+                        };
+
+                    case 'select':
+                        return function (proxies, selected) {
+                            var mp = masterProxies[proxy.getKey()];
+                            if (mp) {
+                                mp.setSel(true, selected);
+                            }
+                            else {
+                                proxy.setSel(true);
+                                selected[proxy.getKey()] = 1;
+                            }
+                            return selected;
+                        };
+
+                    case 'unselect':
+                        return function (proxies, selected) {
+                            var mp = masterProxies[proxy.getKey()];
+                            if (mp) {
+                                mp.setSel(false, selected);
+                            }
+                            else {
+                                proxy.setSel(false);
+                                delete selected[proxy.getKey()];
+                            }
+                            return selected;
+                        };
+                }
+            }
+            //me._xcommand = function (cmd, proxy) {
+            //    if (cmd === 'update') {
+            //        update();
+            //    }
+            //    else {
+            //        if (!proxy) return;
+            //        if (cmd !== 'select' && cmd !== 'unselect') return;
+            //        var f = cmd === 'select';
+            //        proxy.setSelected(f);
+
+            //        var controller = proxy.getController();
+            //        var parent = controller.getParent().getParent();
+            //        if (parent) {
+            //            var nc = 0, ns = 0;
+            //            me.getProxies().forEach(function (p) {
+            //                if (p.getController().getParent().getParent() === parent) {
+            //                    nc++;
+            //                    if (p.getSelected()) ns++;
+            //                }
+            //            });
+
+            //            var pproxy = me.getLogicalParent(proxy);
+            //            if (ns === 0) {
+            //                pproxy.setSelected(false);
+            //            }
+            //            else if (ns === nc) {
+            //                pproxy.setSelected(true);
+            //            }
+            //            else {
+            //                pproxy.setSelected(null);
+            //            }
+            //        }
+            //        else {
+            //            me.getProxies().forEach(function (p) {
+            //                if (p.getController().getParent().getParent() === controller) p.setSelected(f);
+            //            });
+            //        }
+            //    }
+            //}
+            return me;
+        }
+
+        /*
         managers.base = function (Nmax) {
 
             function SelProxy(controller) {
@@ -1636,6 +1887,7 @@ var AuCardView = (function ($) {
             }
             return me;
         }
+        */
 
         return managers;
     })();

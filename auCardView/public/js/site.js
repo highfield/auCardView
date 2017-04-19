@@ -47,10 +47,12 @@ $(function () {
         me.template = function (data) {
             var vm = AuCardView.ViewElement.panel();
             vm.setOptions({
+                selkey: data.id,
                 panelXHeaderCSS: {
                     'margin-left': 20
                 },
-                selectionBorderColor: 'blue'
+                selectionBorderColor: 'blue',
+                panelClickEnabled: true
             });
 
             var xhdr = $('<div>');
@@ -131,15 +133,18 @@ $(function () {
             height: 640
         });
         ctr.auCardView(opts);
+        var api = ctr.data('auCardView');
 
         //selection test
+        var selmgr = api.getSelectionManager();
+        //selmgr.setSelected('28'); //Padova
+
         ctr.on('init', function (e) {
-            var api = ctr.data('auCardView');
-            var selmgr = api.getSelectionController().getManager();
-            selmgr.setSelected(function (p) {
-                var controller = p.getController();
-                return controller.getData().nome === 'Arezzo';
-            });
+            selmgr.setSelected('28', true); //Padova
+            //selmgr.setSelected(function (p) {
+            //    var controller = p.getController();
+            //    return controller.getData().nome === 'Padova';
+            //});
         });
 
         BootstrapDialog.show({
@@ -214,8 +219,10 @@ $(function () {
 
     $('#selmode1,#selmode2,#selmode3').on('change', function () {
         var v = $('input[name=inlineRadioOptions]:checked').val();
-        cv1.getSelectionController().setManager(v);
-        cv2.getSelectionController().setManager(v);
+        cv1.setSelectionManager(v);
+        cv2.setSelectionManager(v);
+        //cv1.getSelectionController().setManager(v);
+        //cv2.getSelectionController().setManager(v);
     });
 
 
@@ -260,7 +267,7 @@ $(function () {
                 log.push('selected=(none)');
                 break;
             case 1:
-                log.push('selected=' + e.selected[0].nome);
+                log.push('selected=' + e.selected[0]);
                 break;
             default:
                 log.push('selected=(' + e.selected.length + ' items)');

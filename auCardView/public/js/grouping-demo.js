@@ -32,7 +32,11 @@ var GroupingDemo = (function ($) {
         me.setColumns(columns);
 
         me.template = function (data) {
-            return AuCardView.ViewElement.tableRow();
+            var vm = AuCardView.ViewElement.tableRow();
+            vm.setOptions({
+                selkey: data.id
+            });
+            return vm;
         }
 
         return me;
@@ -57,6 +61,9 @@ var GroupingDemo = (function ($) {
 
         me.template = function (data) {
             var vm = AuCardView.ViewElement.panel();
+            vm.setOptions({
+                selkey: data.key
+            });
 
             var xhdr = $('<div>');
             $('<span>').text(data.key).appendTo(xhdr);
@@ -77,7 +84,7 @@ var GroupingDemo = (function ($) {
         var options4 = {
             showSearch: true,
             showSort: true,
-            showPage: true,
+            //showPage: true,
             selectionManager: 'multimd',
             dataController: dataController,
             //itemsController: TTable(),
